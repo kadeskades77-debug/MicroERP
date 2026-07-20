@@ -3,7 +3,9 @@ using MicroERP.Application.Common.Interfaces;
 using MicroERP.Domain.Audit;
 using MicroERP.Domain.Identity;
 using MicroERP.Domin.Common;
+using MicroERP.Domin.Entities;
 using MicroERP.Domin.Identity;
+using MicroERP.Persistence.Seed;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -13,11 +15,11 @@ public class ApplicationDbContext
     : IdentityDbContext<ApplicationUser, ApplicationRole, string>,
       IApplicationDbContext
 {
-    private readonly ICurrentUserService _currentUser;
+    private readonly ICurrentUserService? _currentUser;
 
     public ApplicationDbContext(
         DbContextOptions<ApplicationDbContext> options,
-        ICurrentUserService currentUser)
+        ICurrentUserService? currentUser = null)
         : base(options)
     {
         _currentUser = currentUser;
@@ -41,6 +43,7 @@ public class ApplicationDbContext
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(
                typeof(ApplicationDbContext).Assembly);
+        LeavePolicySeeder.Seed(builder);
     }
     public override int SaveChanges()
     {
@@ -59,7 +62,9 @@ public class ApplicationDbContext
         var entries = ChangeTracker.Entries<BaseEntity>();
 
         var now = DateTime.UtcNow;
-        var userId = _currentUser.UserId;
+
+        var userId = _currentUser?.UserId;
+
 
         foreach (var entry in entries)
         {
@@ -70,6 +75,7 @@ public class ApplicationDbContext
                 entry.Entity.IsActive = true;
                 entry.Entity.IsDeleted = false;
             }
+
 
             if (entry.State == EntityState.Modified)
             {
@@ -94,4 +100,10 @@ public class ApplicationDbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<UserPermissionAssignment> UserPermissionAssignments
      => Set<UserPermissionAssignment>();
+    public DbSet<EmployeeDocument> EmployeeDocuments { get; set; }
+    public DbSet<EmployeeLeave> EmployeeLeaves { get; set; }
+    public DbSet<EmployeeLeaveBalance> EmployeeLeaveBalances { get; set; }
+    public DbSet<LeavePolicy> LeavePolicies { get; set; }
+    public DbSet<EmployeeSpecialLeave> EmployeeSpecialLeaves { get; set; }
+    public DbSet<LeaveAttachment> LeaveAttachments { get; set; }
 }

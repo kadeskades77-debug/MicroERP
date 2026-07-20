@@ -1,0 +1,48 @@
+﻿using Domin.Entities;
+using MicroERP.Application.Features.Employees.DTOs;
+
+namespace MicroERP.Application.Common.Mappings;
+
+public static class EmployeeMappings
+{
+    public static EmployeeDto ToDto(this Employee employee)
+    {
+        return new EmployeeDto
+        {
+            Id = employee.Id,
+
+            FullName = employee.User.FullName,
+            UserName = employee.User.UserName!,
+            Email = employee.User.Email,
+
+            Phone = employee.Phone,
+            Salary = employee.Salary,
+
+            DepartmentCode = employee.Department.Code,
+            DepartmentName = employee.Department.NameAr,
+
+            IsActive = employee.IsActive
+        };
+    }
+
+
+    public static EmployeeListDto ToListDto(this Employee employee)
+    {
+        return new EmployeeListDto
+        {
+            Id = employee.Id,
+
+            FullName = employee.User.FullName,
+            UserName = employee.User.UserName!,
+            Email = employee.User.Email,
+
+            Phone = employee.Phone,
+            Salary = employee.Salary,
+
+            DepartmentCode = employee.Department.Code,
+            DepartmentName = employee.Department.NameAr,
+
+            IsActive = employee.IsActive
+        };
+    }
+}

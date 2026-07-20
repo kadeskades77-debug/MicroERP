@@ -1,4 +1,5 @@
-﻿using MicroERP.Application.Common.Models;
+﻿using MicroERP.Application.Common.DTOs;
+using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.Permissions.DTOs;
 
 namespace MicroERP.Application.Features.Permissions.Interfaces
@@ -16,5 +17,6 @@ namespace MicroERP.Application.Features.Permissions.Interfaces
         Task<Result> UpdateAsync(int id, UpdatePermissionDto dto);
 
         Task<Result> DeleteAsync(int id);
+        Task<List<LookupDto>> GetLookupAsync();
     }
 }

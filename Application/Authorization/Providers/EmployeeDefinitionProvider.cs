@@ -31,7 +31,25 @@ public class EmployeeDefinitionProvider
                 key: EmployeePermissions.Profile.ChangePassword,
                 name: "Change Password",
                 description: "Allows employee to change own password."
-            )
+            ),
+            //==============================EmployeeLeave=======================
+             new(
+                Group.Key,
+                HRPermissions.EmployeeLeave.Create,
+                "Create Employee Leave",
+                "Allows creating Employee Leave."
+            ),
+              new(Group.Key,
+                HRPermissions.EmployeeLeave.Update,
+                "Update Employee Leave",
+                "Allows updating Employee Leave."
+            ),
+
+            new(Group.Key,
+                HRPermissions.EmployeeLeave.Delete,
+                "Delete Employee Leave",
+                "Allows deleting Employee Leave."
+            ),
         ];
     }
 }

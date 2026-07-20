@@ -21,11 +21,8 @@
     <Folder Include="Authorization\Groups\" />
     <Folder Include="Authorization\Initialization\" />
     <Folder Include="Authorization\Services\" />
-    <Folder Include="Common\Constants\" />
-    <Folder Include="DTOS\" />
     <Folder Include="Features\Audit\Validators\" />
     <Folder Include="Features\Auth\Services\" />
-    <Folder Include="Mappings\" />
     <Folder Include="Behaviors\" />
     <Folder Include="Exceptions\" />
     <Folder Include="Responses\" />

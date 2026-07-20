@@ -1,4 +1,5 @@
 ﻿using MicroERP.Application.Authorization.Interfaces;
+using MicroERP.Application.Common.DTOs;
 using MicroERP.Application.Common.Interfaces;
 using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.Audit.Interfaces;
@@ -7,7 +8,7 @@ using MicroERP.Application.Features.PermissionGroups.Interfaces;
 using MicroERP.Domain.Audit;
 using MicroERP.Domain.Identity;
 using Microsoft.EntityFrameworkCore;
-
+using System.Text.RegularExpressions;
 namespace MicroERP.Infrastructure.Services;
 
 public class PermissionGroupService : IPermissionGroupService
@@ -15,15 +16,18 @@ public class PermissionGroupService : IPermissionGroupService
     private readonly IApplicationDbContext _context;
     private readonly IAuthorizationManager _authorizationManager;
     private readonly IAuditService _auditService;
+    private readonly IPermissionGroupQueries _permissionGroupQueries;
 
     public PermissionGroupService(
         IApplicationDbContext context,
         IAuthorizationManager authorizationManager,
-        IAuditService auditService)
+        IAuditService auditService,
+        IPermissionGroupQueries permissionGroupQueries)
     {
         _context = context;
         _authorizationManager = authorizationManager;
         _auditService = auditService;
+        _permissionGroupQueries = permissionGroupQueries;
     }
 
 
@@ -32,21 +36,7 @@ public class PermissionGroupService : IPermissionGroupService
 
     public async Task<Result<List<PermissionGroupDto>>> GetAllAsync()
     {
-        var groups = await _context.PermissionGroups
-            .Select(x => new PermissionGroupDto
-            {
-                Id = x.Id,
-                Name = x.Name,
-                Key = x.Key,
-                Description = x.Description,
-                IsSystem = x.IsSystem,
-
-                Permissions = x.PermissionGroupPermissions
-                    .Select(p => p.Permission.Key)
-                    .ToList()
-            })
-            .OrderBy(x => x.Name)
-            .ToListAsync();
+        var groups = await _permissionGroupQueries.GetAllAsync();
 
 
         return Result<List<PermissionGroupDto>>
@@ -58,21 +48,7 @@ public class PermissionGroupService : IPermissionGroupService
 
     public async Task<Result<PermissionGroupDto>> GetByIdAsync(int id)
     {
-        var group = await _context.PermissionGroups
-            .Where(x => x.Id == id)
-            .Select(x => new PermissionGroupDto
-            {
-                Id = x.Id,
-                Name = x.Name,
-                Key = x.Key,
-                Description = x.Description,
-                IsSystem = x.IsSystem,
-
-                Permissions = x.PermissionGroupPermissions
-                    .Select(p => p.Permission.Key)
-                    .ToList()
-            })
-            .FirstOrDefaultAsync();
+        var group = await _permissionGroupQueries.GetByIdAsync(id);
 
 
         if (group is null)
@@ -97,10 +73,7 @@ public class PermissionGroupService : IPermissionGroupService
 
 
             var existsName =
-                await _context.PermissionGroups
-                .AnyAsync(x =>
-                    x.Name.ToUpper() == name.ToUpper());
-
+               await _permissionGroupQueries.ExistsByNameAsync(name);
 
             if (existsName)
                 return Result.Failure(
@@ -109,9 +82,7 @@ public class PermissionGroupService : IPermissionGroupService
 
 
             var existsKey =
-                await _context.PermissionGroups
-                .AnyAsync(x =>
-                    x.Key.ToUpper() == key.ToUpper());
+                await _permissionGroupQueries.ExistsByKeyAsync(key);
 
 
             if (existsKey)
@@ -157,8 +128,7 @@ public class PermissionGroupService : IPermissionGroupService
     {
         return await ExecuteInTransaction(async () =>
         {
-            var group = await _context.PermissionGroups
-                .FirstOrDefaultAsync(x => x.Id == groupId);
+            var group = await _permissionGroupQueries.GetById(groupId);
 
             if (group is null)
                 return Result.Failure(
@@ -253,9 +223,7 @@ public class PermissionGroupService : IPermissionGroupService
         return await ExecuteInTransaction(async () =>
         {
             var group =
-                await _context.PermissionGroups
-                .FirstOrDefaultAsync(x =>
-                    x.Id == groupId);
+               await _permissionGroupQueries.GetById(groupId);
 
 
             if (group is null)
@@ -341,9 +309,7 @@ public class PermissionGroupService : IPermissionGroupService
         return await ExecuteInTransaction(async () =>
         {
             var group =
-                await _context.PermissionGroups
-                .FirstOrDefaultAsync(x =>
-                    x.Id == id);
+               await _permissionGroupQueries.GetById(id);
 
 
             if (group is null)
@@ -455,9 +421,7 @@ public class PermissionGroupService : IPermissionGroupService
         return await ExecuteInTransaction(async () =>
         {
             var group =
-                await _context.PermissionGroups
-                .FirstOrDefaultAsync(x =>
-                    x.Id == id);
+               await _permissionGroupQueries.GetById(id); ;
 
 
 
@@ -518,6 +482,18 @@ public class PermissionGroupService : IPermissionGroupService
 
     //================ HELPERS =================
 
+    public async Task<List<LookupDto>> GetLookupAsync()
+    {
+        return await _context.PermissionGroups
+            .AsNoTracking()
+            .OrderBy(x => x.Name)
+            .Select(x => new LookupDto
+            {
+                Value = x.Key,
+                Text = x.Name
+            })
+            .ToListAsync();
+    }
 
     private async Task<Result<List<Permission>>>GetPermissionsAsync(IEnumerable<string> keys)
     {
@@ -567,6 +543,7 @@ public class PermissionGroupService : IPermissionGroupService
             .ClearUsersPermissionsCacheAsync(userIds);
         
     }
+
     private async Task UpdatePermissionGroupPermissionsAsync(int permissionGroupId,IEnumerable<Permission> permissions)
     {
         await _context.PermissionGroupPermissions

@@ -7,19 +7,34 @@ using MicroERP.Application.Features.Audit.Interfaces;
 using MicroERP.Application.Features.Auth.Interfaces;
 using MicroERP.Application.Features.Departments.Interfaces;
 using MicroERP.Application.Features.Departments.Services;
+using MicroERP.Application.Features.Documents.EmployeeDocuments.Interfaces;
+using MicroERP.Application.Features.Documents.EmployeeDocuments.Service;
+using MicroERP.Application.Features.Documents.LeaveDocuments.Interfaces;
+using MicroERP.Application.Features.Documents.LeaveDocuments.Service;
+using MicroERP.Application.Features.EmployeeLeaveBalances.Interfaces;
+using MicroERP.Application.Features.EmployeeLeaveBalances.Services;
+using MicroERP.Application.Features.EmployeeLeaves.Interfaces;
+using MicroERP.Application.Features.EmployeeLeaves.Services;
 using MicroERP.Application.Features.Employees.Interfaces;
 using MicroERP.Application.Features.Employees.Services;
+using MicroERP.Application.Features.EmployeeSpecialLeaves.Interfaces;
+using MicroERP.Application.Features.EmployeeSpecialLeaves.Services;
+using MicroERP.Application.Features.PermissionGroups.Interfaces;
 using MicroERP.Application.Features.Permissions.Interfaces;
 using MicroERP.Application.Features.Roles.Interfaces;
 using MicroERP.Application.Features.UserPermissions.Interfaces;
 using MicroERP.Domain.Identity;
 using MicroERP.Infrastructure.Authorization;
+using MicroERP.Infrastructure.BackgroundJobs;
 using MicroERP.Infrastructure.Identity;
 using MicroERP.Infrastructure.Security;
 using MicroERP.Infrastructure.Services;
+using MicroERP.Infrastructure.Services.EmployeeDocuments;
+using MicroERP.Infrastructure.Services.Files;
 using MicroERP.Infrastructure.Settings;
 using MicroERP.Persistence;
 using MicroERP.Persistence.Authorization;
+using MicroERP.Persistence.Queries;
 using MicroERP.Persistence.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -190,12 +205,28 @@ builder.Services.AddScoped<IApplicationDbContext,ApplicationDbContext>();
 builder.Services.AddScoped<IUnitOfWork,UnitOfWork>();
 builder.Services.AddScoped<IAuthorizationManager,AuthorizationManager>();
 builder.Services.AddScoped<IDepartmentService,DepartmentService>();
+builder.Services.AddScoped<IDepartmentQueries, DepartmentQueries>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<IEmployeeQueries, EmployeeQueries>();
 builder.Services.AddScoped<IUserRoleService,UserRoleService>();
 builder.Services.AddScoped<IRoleService,RoleService>();
 builder.Services.AddScoped<IUserPermissionAssignmentService,UserPermissionAssignmentService>();
 builder.Services.AddScoped<IAuditService,AuditService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
+builder.Services.AddScoped<IPermissionGroupQueries,PermissionGroupQueries>();
+builder.Services.AddScoped<IPermissionQueries,PermissionQueries>();
+builder.Services.AddScoped<IEmployeeDocumentQueries, EmployeeDocumentQueries>();
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
+builder.Services.AddHostedService<YearlyLeaveBalanceJob>();
+builder.Services.AddScoped<IEmployeeDocumentService, EmployeeDocumentService>();
+builder.Services.AddScoped<IEmployeeLeaveQueries, EmployeeLeaveQueries>();
+builder.Services.AddScoped<IEmployeeLeaveService, EmployeeLeaveService>();
+builder.Services.AddScoped<IEmployeeSpecialLeaveService, EmployeeSpecialLeaveService>();
+builder.Services.AddScoped<IEmployeeSpecialLeaveQueries, EmployeeSpecialLeaveQueries>();
+builder.Services.AddScoped<IEmployeeLeaveBalanceQueries,EmployeeLeaveBalanceQueries>();
+builder.Services.AddScoped<IEmployeeLeaveBalanceService, EmployeeLeaveBalanceService>();
+builder.Services.AddScoped<ILeaveBalanceGenerator, LeaveBalanceGeneratorService>();
+builder.Services.AddScoped<ILeaveAttachmentService, LeaveAttachmentService>();
 
 #endregion
 
@@ -224,6 +255,10 @@ builder.Services.AddScoped<
     IPermissionDefinitionProvider,
     AuditDefinitionProvider>();
 
+builder.Services.AddScoped<
+    IPermissionDefinitionProvider,
+    EmployeeDocumentsProvider>();
+
 #endregion
 
 
@@ -241,8 +276,6 @@ builder.Services.AddScoped<
 
 
 var app = builder.Build();
-
-
 
 
 #region Database Seed

@@ -1,4 +1,5 @@
-﻿using MicroERP.Application.Common.Models;
+﻿using MicroERP.Application.Common.DTOs;
+using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.Roles.DTOs;
 
 namespace MicroERP.Application.Features.Roles.Interfaces;
@@ -14,4 +15,6 @@ public interface IRoleService
     Task<Result> UpdateAsync(string id, UpdateRoleDto dto);
 
     Task<Result> DeleteAsync(string id);
+
+    Task<List<LookupDto>> GetLookupAsync();
 }

@@ -73,6 +73,21 @@ namespace MicroERP.Controllers
             return Ok(result);
         }
 
+        [HttpPut("{managerEmployeeId:int}/transfer-manager")]
+        [Authorize(Policy = HRPermissions.Department.AssignManager)]
+        public async Task<IActionResult> TransferManager(int managerEmployeeId,TransferDepartmentManagerDto dto)
+        {
+            var result = await _departmentService
+                .TransferDepartmentManagerAsync(
+                    managerEmployeeId,
+                    dto);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
         [HttpDelete("{id:int}")]
         [Authorize(Policy = HRPermissions.Department.Delete)]
         public async Task<IActionResult> Delete(int id)
@@ -97,6 +112,12 @@ namespace MicroERP.Controllers
                 Success = true,
                 Message = "Department restored successfully."
             });
+        }
+
+        [HttpGet("lookup")]
+        public async Task<IActionResult> Lookup()
+        {
+            return Ok(await _departmentService.GetLookupAsync());
         }
     }
 }

@@ -1,16 +1,20 @@
 ﻿using Domin.Entities;
+using MicroERP.Application.Common.DTOs;
 using MicroERP.Application.Common.Exceptions;
 using MicroERP.Application.Common.Interfaces;
+using MicroERP.Application.Common.Mappings;
 using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.Audit.Interfaces;
 using MicroERP.Application.Features.Auth.DTOs;
 using MicroERP.Application.Features.Auth.Interfaces;
+using MicroERP.Application.Features.Departments.Interfaces;
+using MicroERP.Application.Features.EmployeeLeaveBalances.Interfaces;
 using MicroERP.Application.Features.Employees.DTOs;
 using MicroERP.Application.Features.Employees.Interfaces;
 using MicroERP.Domain.Audit;
 using MicroERP.Domin.Identity;
 using Microsoft.EntityFrameworkCore;
-using static MicroERP.Application.Authorization.Permissions.IdentityPermissions;
+using System.Threading;
 
 namespace MicroERP.Application.Features.Employees.Services
 {
@@ -20,20 +24,30 @@ namespace MicroERP.Application.Features.Employees.Services
         private readonly IdentityService _authService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAuditService _auditService;
+        private readonly IEmployeeQueries _employeeQueries;
+        private readonly IDepartmentQueries _departmentQueries;
+        private readonly ILeaveBalanceGenerator _leaveBalanceGenerator;
 
         public EmployeeService(
            IApplicationDbContext context,
            IdentityService authService,
            IUnitOfWork unitOfWork,
-           IAuditService auditService)
+           IAuditService auditService,
+           IEmployeeQueries employeeQueries,
+           IDepartmentQueries departmentQueries,
+           ILeaveBalanceGenerator leaveBalanceGenerator)
         {
             _context = context;
             _authService = authService;
             _unitOfWork = unitOfWork;
             _auditService = auditService;
+            _employeeQueries = employeeQueries;
+            _departmentQueries = departmentQueries;
+            _leaveBalanceGenerator = leaveBalanceGenerator;
         }
 
-        public async Task<CreateEmployeeResultDto> CreateAsync(CreateEmployeeDto dto)
+        public async Task<CreateEmployeeResultDto> CreateAsync(CreateEmployeeDto dto,
+            CancellationToken cancellationToken = default)
         {
             dto.FullName = dto.FullName.Trim();
             dto.Phone = dto.Phone.Trim();
@@ -47,11 +61,8 @@ namespace MicroERP.Application.Features.Employees.Services
                     "Salary must be greater than zero.");
 
 
-
-            var department = await _context.Departments
-                .FirstOrDefaultAsync(x =>
-                    x.Id == dto.DepartmentId &&
-                    !x.IsDeleted);
+            var department = await _departmentQueries
+                .GetByIdAsync(dto.DepartmentId);
 
 
             if (department is null)
@@ -59,11 +70,8 @@ namespace MicroERP.Application.Features.Employees.Services
                     "Department not found.");
 
 
-
-            var phoneExists = await _context.Employees
-                .AnyAsync(x =>
-                    x.Phone == dto.Phone &&
-                    !x.IsDeleted);
+            var phoneExists = await _employeeQueries
+                .PhoneExistsAsync(dto.Phone);
 
 
             if (phoneExists)
@@ -71,8 +79,6 @@ namespace MicroERP.Application.Features.Employees.Services
                     "Phone already exists.");
 
 
-
-            // Create Identity User
             var userResult = await _authService.CreateEmployeeUserAsync(
                 new CreateEmployeeUserDto
                 {
@@ -84,7 +90,6 @@ namespace MicroERP.Application.Features.Employees.Services
             if (!userResult.Success || userResult.Data is null)
                 throw new BusinessException(
                     userResult.Message);
-
 
 
             try
@@ -114,13 +119,11 @@ namespace MicroERP.Application.Features.Employees.Services
                             "Employee permission group not found.");
 
 
-
                     var assignmentExists =
                         await _context.UserPermissionAssignments
                             .AnyAsync(x =>
                                 x.UserId == userResult.Data.UserId &&
                                 x.PermissionGroupId == employeeGroup.Id);
-
 
 
                     if (!assignmentExists)
@@ -132,11 +135,8 @@ namespace MicroERP.Application.Features.Employees.Services
                                 PermissionGroupId = employeeGroup.Id
                             });
                     }
-
-
-
+            
                     await _context.SaveChangesAsync();
-
 
 
                     await _auditService.LogAsync(
@@ -153,9 +153,9 @@ namespace MicroERP.Application.Features.Employees.Services
                         });
 
 
-
                     await _context.SaveChangesAsync();
-
+                    await _leaveBalanceGenerator
+           .GenerateForEmployeeAsync(employee.Id, DateTime.UtcNow.Year, cancellationToken);
 
 
                     return new CreateEmployeeResultDto
@@ -177,86 +177,105 @@ namespace MicroERP.Application.Features.Employees.Services
         }
         public async Task<Result<List<EmployeeListDto>>> GetAllAsync()
         {
-            var data = await _context.Employees
-                .Select(x => new EmployeeListDto
-                {
-                    Id = x.Id,
-                    FullName = x.User.FullName,
-                    UserName = x.User.UserName,
-                    Email = x.User.Email,
-                    Phone = x.Phone,
-                    Salary = x.Salary,
-                    DepartmentCode = x.Department.Code,
-                    DepartmentName = x.Department.NameEn,
-                    IsActive = x.IsActive
-                })
-                .ToListAsync();
+            var data = await _employeeQueries.GetAllAsync();
 
             return Result<List<EmployeeListDto>>.Succeeded(data);
         }
         public async Task<EmployeeDto> GetByIdAsync(int id)
         {
-            var employee = await _context.Employees
-                .Select(x => new EmployeeDto
-                {
-                    Id = x.Id,
-                    FullName = x.User.FullName,
-                    UserName = x.User.UserName!,
-                    Email = x.User.Email,
-                    Phone = x.Phone,
-                    Salary = x.Salary,
-                    DepartmentCode = x.Department.Code,
-                    DepartmentName = x.Department.NameEn,
-                    IsActive = x.IsActive
-                })
-                .FirstOrDefaultAsync(x => x.Id == id);
+            var employee =
+                await _employeeQueries
+                    .GetByIdWithUserAndDepartmentAsync(id);
+
 
             if (employee is null)
-                throw new NotFoundException("Employee not found.");
+                throw new NotFoundException(
+                    "Employee not found.");
+            return employee.ToDto();
 
-            return employee;
+            //  return new EmployeeDto
+            //{
+            //    Id = employee.Id,
+            //    FullName = employee.User.FullName,
+            //    UserName = employee.User.UserName!,
+            //    Email = employee.User.Email,
+            //    Phone = employee.Phone,
+            //    Salary = employee.Salary,
+            //    DepartmentCode = employee.Department.Code,
+            //    DepartmentName = employee.Department.NameEn,
+            //    IsActive = employee.IsActive
+            //};
         }
         public async Task<Result> TransferEmployeeAsync(int employeeId,TransferEmployeeDto dto)
         {
             return await _unitOfWork.ExecuteAsync(async () =>
             {
-                var employee = await _context.Employees
-                    .FirstOrDefaultAsync(x =>
-                        x.Id == employeeId &&
-                        !x.IsDeleted);
+                var employee =
+                    await _employeeQueries.GetByIdAsync(employeeId);
+
 
                 if (employee is null)
-                    return Result.Failure("Employee not found.");
+                    return Result.Failure(
+                        "Employee not found.");
 
-                var department = await _context.Departments
-                    .FirstOrDefaultAsync(x =>
-                        x.Id == dto.DepartmentId &&
-                        !x.IsDeleted);
 
-                if (department is null)
-                    return Result.Failure("Department not found.");
+                var newDepartment =
+                    await _departmentQueries.GetByIdAsync(
+                        dto.DepartmentId);
+
+
+                if (newDepartment is null)
+                    return Result.Failure(
+                        "Department not found.");
+
 
                 if (employee.DepartmentId == dto.DepartmentId)
                     return Result.Failure(
                         "Employee already belongs to this department.");
 
-                var oldValues = new
+
+                var oldDepartmentId = employee.DepartmentId;
+
+
+                var oldDepartment =
+                    await _departmentQueries.GetByIdAsync(
+                        oldDepartmentId);
+
+
+                var removedAsManager = false;
+
+
+                if (oldDepartment != null &&
+                    oldDepartment.ManagerEmployeeId == employee.Id)
                 {
-                    employee.DepartmentId
-                };
+                    oldDepartment.ManagerEmployeeId = null;
+                    oldDepartment.HasManager = false;
+
+                    removedAsManager = true;
+                }
+
 
                 employee.DepartmentId = dto.DepartmentId;
+
 
                 await _auditService.LogAsync(
                     AuditActions.Update,
                     nameof(Employee),
                     employee.Id.ToString(),
-                    oldValues,
                     new
                     {
-                        employee.DepartmentId
+                        DepartmentId = oldDepartmentId
+                    },
+                    new
+                    {
+                        employee.DepartmentId,
+                        RemovedAsManager = removedAsManager
                     });
+
+
                 await _context.SaveChangesAsync();
+
+
                 return Result.Succeeded(
                     "Employee transferred successfully.");
             });
@@ -269,10 +288,7 @@ namespace MicroERP.Application.Features.Employees.Services
                     return Result.Failure(
                         "Salary must be greater than zero.");
 
-                var employee = await _context.Employees
-                    .FirstOrDefaultAsync(x =>
-                        x.Id == employeeId &&
-                        !x.IsDeleted);
+                var employee = await _employeeQueries.GetByIdAsync(employeeId);
 
                 if (employee is null)
                     return Result.Failure(
@@ -305,9 +321,8 @@ namespace MicroERP.Application.Features.Employees.Services
         }
         public async Task<Result> UpdateAsync(int id, UpdateEmployeeDto dto)
         {
-            var employee = await _context.Employees
-                .Include(x => x.User)
-                .FirstOrDefaultAsync(x => x.Id == id);
+            var employee =
+       await _employeeQueries.GetByIdWithUserAsync(id);
 
             if (employee is null)
                 throw new NotFoundException("Employee not found.");
@@ -323,10 +338,10 @@ namespace MicroERP.Application.Features.Employees.Services
             {
                 dto.Phone = dto.Phone.Trim();
 
-                var phoneExists = await _context.Employees
-                    .AnyAsync(x =>
-                        x.Id != id &&
-                        x.Phone == dto.Phone);
+                var phoneExists =
+                 await _employeeQueries.PhoneExistsAsync(
+               dto.Phone,
+               id);
 
                 if (phoneExists)
                     throw new BusinessException("Phone already exists.");
@@ -376,31 +391,46 @@ namespace MicroERP.Application.Features.Employees.Services
         }
         public async Task DeleteAsync(int id)
         {
-            var employee = await _context.Employees
-                .FirstOrDefaultAsync(x => x.Id == id);
+            var employee =
+                await _employeeQueries.GetByIdAsync(id);
+
 
             if (employee is null)
-                throw new NotFoundException("Employee not found.");
+                throw new NotFoundException(
+                    "Employee not found.");
 
-            var result = await _authService.DeactivateUserAsync(employee.UserId);
+
+            var result =
+                await _authService.DeactivateUserAsync(
+                    employee.UserId);
+
 
             if (!result.Success)
-                throw new BusinessException(result.Message);
+                throw new BusinessException(
+                    result.Message);
+
+
             var oldValues = new
             {
                 employee.IsDeleted
             };
-            var managedDepartment = await _context.Departments
-           .FirstOrDefaultAsync(x =>
-        x.ManagerEmployeeId == employee.Id);
+
+
+            var managedDepartment =
+                await _departmentQueries
+                    .GetByManagerIdAsync(employee.Id);
+
 
             if (managedDepartment is not null)
             {
                 managedDepartment.ManagerEmployeeId = null;
                 managedDepartment.HasManager = false;
             }
+
+
             employee.IsDeleted = true;
             employee.IsActive = false;
+
 
             await _auditService.LogAsync(
                 AuditActions.Delete,
@@ -411,20 +441,25 @@ namespace MicroERP.Application.Features.Employees.Services
                 {
                     employee.IsDeleted
                 });
-            await _context.SaveChangesAsync();
 
+
+            await _context.SaveChangesAsync();
         }
         public async Task RestoreAsync(int id)
         {
-            var employee = await _context.Employees
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(x => x.Id == id);
+            var employee =
+                await _employeeQueries.GetDeletedByIdAsync(id);
+
 
             if (employee is null)
-                throw new NotFoundException("Employee not found.");
+                throw new NotFoundException(
+                    "Employee not found.");
+
 
             if (!employee.IsDeleted)
-                throw new BusinessException("Employee is already active.");
+                throw new BusinessException(
+                    "Employee is already active.");
+
 
             var oldValues = new
             {
@@ -432,8 +467,10 @@ namespace MicroERP.Application.Features.Employees.Services
                 employee.IsActive
             };
 
+
             employee.IsDeleted = false;
             employee.IsActive = true;
+
 
             await _auditService.LogAsync(
                 AuditActions.Restore,
@@ -446,42 +483,73 @@ namespace MicroERP.Application.Features.Employees.Services
                     employee.IsActive
                 });
 
+
             await _context.SaveChangesAsync();
         }
         public async Task ActivateAsync(int id)
         {
-            var employee = await _context.Employees
-                .FirstOrDefaultAsync(x => x.Id == id);
+            var employee =
+                await _employeeQueries.GetByIdAsync(id);
+
 
             if (employee is null)
-                throw new NotFoundException("Employee not found.");
+                throw new NotFoundException(
+                    "Employee not found.");
 
-            var result = await _authService.ActivateUserAsync(employee.UserId);
+
+            var result =
+                await _authService.ActivateUserAsync(
+                    employee.UserId);
+
 
             if (!result.Success)
-                throw new BusinessException(result.Message);
+                throw new BusinessException(
+                    result.Message);
+
 
             employee.IsActive = true;
+
 
             await _context.SaveChangesAsync();
         }
         public async Task DeactivateAsync(int id)
         {
-            var employee = await _context.Employees
-                .FirstOrDefaultAsync(x => x.Id == id);
+            var employee =
+                await _employeeQueries.GetByIdAsync(id);
+
 
             if (employee is null)
-                throw new NotFoundException("Employee not found.");
+                throw new NotFoundException(
+                    "Employee not found.");
 
-            var result = await _authService.DeactivateUserAsync(employee.UserId);
+
+            var result =
+                await _authService.DeactivateUserAsync(
+                    employee.UserId);
+
 
             if (!result.Success)
-                throw new BusinessException(result.Message);
+                throw new BusinessException(
+                    result.Message);
+
 
             employee.IsActive = false;
 
+
             await _context.SaveChangesAsync();
         }
-
+        public async Task<List<LookupDto>> GetLookupAsync()
+        {
+            return await _context.Employees
+                .AsNoTracking()
+                .Include(x => x.User)
+                .OrderBy(x => x.User.FullName)
+                .Select(x => new LookupDto
+                {
+                    Value = x.Id.ToString(),
+                    Text = x.User.FullName
+                })
+                .ToListAsync();
+        }
     }
 }

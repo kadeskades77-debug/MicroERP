@@ -1,5 +1,7 @@
 ﻿using MicroERP.Application.Authorization.Interfaces;
+using MicroERP.Application.Common.DTOs;
 using MicroERP.Application.Common.Interfaces;
+using MicroERP.Application.Common.Mappings;
 using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.Audit.Interfaces;
 using MicroERP.Application.Features.Permissions.DTOs;
@@ -7,8 +9,8 @@ using MicroERP.Application.Features.Permissions.Interfaces;
 using MicroERP.Application.Features.Permissions.Validators;
 using MicroERP.Domain.Audit;
 using MicroERP.Domain.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
 namespace MicroERP.Infrastructure.Services;
 
 public class PermissionService : IPermissionService
@@ -16,28 +18,21 @@ public class PermissionService : IPermissionService
     private readonly IApplicationDbContext _context;
     private readonly IAuditService _auditService;
     private readonly IAuthorizationManager _authorizationManager;
+    private readonly IPermissionQueries _permissionQueries;
     public PermissionService(
-        IApplicationDbContext context, IAuditService auditService, IAuthorizationManager authorizationManager)
+        IApplicationDbContext context, IAuditService auditService, IAuthorizationManager authorizationManager, IPermissionQueries permissionQueries)
     {
         _context = context;
         _auditService = auditService;
         _authorizationManager = authorizationManager;
+        _permissionQueries = permissionQueries;
     }
 
 
     //================ GET ALL =================
     public async Task<Result<List<PermissionDto>>> GetAllAsync()
     {
-        var permissions = await _context.Permissions
-            .OrderBy(x => x.Key)
-            .Select(x => new PermissionDto
-            {
-                Id = x.Id,
-                Key = x.Key,
-                Name = x.Name,
-                Description = x.Description
-            })
-            .ToListAsync();
+        var permissions = await _permissionQueries.GetAllAsync();
 
         return Result<List<PermissionDto>>
             .Succeeded(permissions);
@@ -47,27 +42,9 @@ public class PermissionService : IPermissionService
     //================ GET Available Permissions =================
     public async Task<Result<List<PermissionDto>>> GetAvailablePermissionsAsync()
     {
-        var superAdminGroupId = await _context.PermissionGroups
-            .Where(x => x.Name == "SuperAdmin")
-            .Select(x => x.Id)
-            .FirstOrDefaultAsync();
+        
 
-
-        var permissions = await _context.Permissions
-            .AsNoTracking()
-            .Where(p => !_context.PermissionGroupPermissions
-                .Any(pg =>
-                    pg.PermissionId == p.Id &&
-                    pg.PermissionGroupId != superAdminGroupId))
-            .OrderBy(p => p.Name)
-            .Select(p => new PermissionDto
-            {
-                Id = p.Id,
-                Key = p.Key,
-                Name = p.Name,
-                Description = p.Description
-            })
-            .ToListAsync();
+        var permissions = await _permissionQueries.GetAvailablePermissionsAsync();
 
 
         return Result<List<PermissionDto>>
@@ -77,17 +54,8 @@ public class PermissionService : IPermissionService
     //================ GET BY ID =================
     public async Task<Result<PermissionDto>> GetByIdAsync(int id)
     {
-        var permission = await _context.Permissions
-            .Where(x => x.Id == id)
-            .Select(x => new PermissionDto
-            {
-                Id = x.Id,
-                Key = x.Key,
-                Name = x.Name,
-                Description = x.Description
-            })
-            .FirstOrDefaultAsync();
-
+        var permission = await _permissionQueries.GetByIdAsync(id);
+        
 
         if (permission is null)
             return Result<PermissionDto>
@@ -107,16 +75,14 @@ public class PermissionService : IPermissionService
         {
             var key = dto.Key.Trim();
 
-            var exists = await _context.Permissions
-                .AnyAsync(x => x.Key == key);
+            var exists = await _permissionQueries.ExistsByKeyAsync(key);
 
             if (exists)
                 return Result.Failure(
                     "Permission key already exists.");
 
 
-            var nameExists = await _context.Permissions
-                .AnyAsync(x => x.Name == dto.Name.Trim());
+            var nameExists = await _permissionQueries.ExistsByNameAsync(dto.Name.Trim());
 
             if (nameExists)
                 return Result.Failure(
@@ -181,8 +147,7 @@ public class PermissionService : IPermissionService
     {
         return await ExecuteInTransaction(async () =>
         {
-            var permission = await _context.Permissions
-                .FirstOrDefaultAsync(x => x.Id == id);
+            var permission = await _permissionQueries.GetById(id);
 
             if (permission is null)
                 return Result.Failure(
@@ -212,10 +177,7 @@ public class PermissionService : IPermissionService
             {
                 var name = dto.Name.Trim();
 
-                var nameExists = await _context.Permissions
-                    .AnyAsync(x =>
-                        x.Id != id &&
-                        x.Name.ToUpper() == name.ToUpper());
+                var nameExists =await _permissionQueries.ExistsByNameAsync(name,id);
 
                 if (nameExists)
                     return Result.Failure(
@@ -263,8 +225,7 @@ public class PermissionService : IPermissionService
     {
         return await ExecuteInTransaction(async () =>
         {
-            var permission = await _context.Permissions
-                .FirstOrDefaultAsync(x => x.Id == id);
+            var permission = await _permissionQueries.GetById(id);
 
             if (permission is null)
                 return Result.Failure(
@@ -356,4 +317,18 @@ public class PermissionService : IPermissionService
             }
         });
     }
+
+    public async Task<List<LookupDto>> GetLookupAsync()
+    {
+        return await _context.Permissions
+            .AsNoTracking()
+            .OrderBy(x => x.Name)
+            .Select(x => new LookupDto
+            {
+                Value = x.Key,
+                Text = x.Name
+            })
+            .ToListAsync();
+    }
+
 }

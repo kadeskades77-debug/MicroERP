@@ -223,6 +223,80 @@ namespace MicroERP.Persistence.Migrations
                     b.ToTable("Employees");
                 });
 
+            modelBuilder.Entity("Domin.Entities.EmployeeDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("IssueDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId", "Name");
+
+                    b.ToTable("EmployeeDocuments");
+                });
+
             modelBuilder.Entity("MicroERP.Domain.Audit.AuditLog", b =>
                 {
                     b.Property<int>("Id")
@@ -461,6 +535,443 @@ namespace MicroERP.Persistence.Migrations
                     b.ToTable("RolePermissionGroups", (string)null);
                 });
 
+            modelBuilder.Entity("MicroERP.Domin.Entities.EmployeeLeave", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApprovedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("ApprovedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmergencyDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LeaveType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("RejectedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("RejectedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("SickDays")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UnpaidDays")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedByUserId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("RejectedByUserId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("EmployeeId", "StartDate", "EndDate");
+
+                    b.ToTable("EmployeeLeaves");
+                });
+
+            modelBuilder.Entity("MicroERP.Domin.Entities.EmployeeLeaveBalance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LeaveType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TotalDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsedDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId", "Year", "LeaveType")
+                        .IsUnique();
+
+                    b.ToTable("EmployeeLeaveBalances");
+                });
+
+            modelBuilder.Entity("MicroERP.Domin.Entities.EmployeeSpecialLeave", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApprovedByUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("ApprovedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("RejectedByUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("RejectedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedByUserId");
+
+                    b.HasIndex("RejectedByUserId");
+
+                    b.HasIndex("EmployeeId", "Type", "Status");
+
+                    b.ToTable("EmployeeSpecialLeaves", (string)null);
+                });
+
+            modelBuilder.Entity("MicroERP.Domin.Entities.LeaveAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("EmployeeLeaveId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("EmployeeSpecialLeaveId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedOn")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeLeaveId");
+
+                    b.HasIndex("EmployeeSpecialLeaveId");
+
+                    b.ToTable("LeaveAttachments");
+                });
+
+            modelBuilder.Entity("MicroERP.Domin.Entities.LeavePolicy", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AllowNegativeBalance")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("DaysPerMonth")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LeaveType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaxNegativeDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaximumDaysPerYear")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("RequiresBalance")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LeaveType")
+                        .IsUnique();
+
+                    b.ToTable("LeavePolicies");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = -1,
+                            AllowNegativeBalance = true,
+                            CreatedOn = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DaysPerMonth = 2.5m,
+                            IsActive = true,
+                            IsDeleted = false,
+                            LeaveType = 1,
+                            MaxNegativeDays = 10,
+                            MaximumDaysPerYear = 30,
+                            RequiresBalance = true
+                        },
+                        new
+                        {
+                            Id = -2,
+                            AllowNegativeBalance = false,
+                            CreatedOn = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DaysPerMonth = 2m,
+                            IsActive = true,
+                            IsDeleted = false,
+                            LeaveType = 2,
+                            MaxNegativeDays = 0,
+                            MaximumDaysPerYear = 22,
+                            RequiresBalance = true
+                        },
+                        new
+                        {
+                            Id = -3,
+                            AllowNegativeBalance = false,
+                            CreatedOn = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DaysPerMonth = 0m,
+                            IsActive = true,
+                            IsDeleted = false,
+                            LeaveType = 3,
+                            MaxNegativeDays = 0,
+                            MaximumDaysPerYear = 10,
+                            RequiresBalance = true
+                        },
+                        new
+                        {
+                            Id = -4,
+                            AllowNegativeBalance = false,
+                            CreatedOn = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DaysPerMonth = 0m,
+                            IsActive = true,
+                            IsDeleted = false,
+                            LeaveType = 4,
+                            MaxNegativeDays = 0,
+                            MaximumDaysPerYear = 0,
+                            RequiresBalance = false
+                        },
+                        new
+                        {
+                            Id = -5,
+                            AllowNegativeBalance = false,
+                            CreatedOn = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DaysPerMonth = 0m,
+                            IsActive = true,
+                            IsDeleted = false,
+                            LeaveType = 5,
+                            MaxNegativeDays = 0,
+                            MaximumDaysPerYear = 60,
+                            RequiresBalance = false
+                        },
+                        new
+                        {
+                            Id = -6,
+                            AllowNegativeBalance = false,
+                            CreatedOn = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DaysPerMonth = 0m,
+                            IsActive = true,
+                            IsDeleted = false,
+                            LeaveType = 6,
+                            MaxNegativeDays = 0,
+                            MaximumDaysPerYear = 5,
+                            RequiresBalance = false
+                        },
+                        new
+                        {
+                            Id = -7,
+                            AllowNegativeBalance = false,
+                            CreatedOn = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DaysPerMonth = 0m,
+                            IsActive = true,
+                            IsDeleted = false,
+                            LeaveType = 7,
+                            MaxNegativeDays = 0,
+                            MaximumDaysPerYear = 7,
+                            RequiresBalance = false
+                        },
+                        new
+                        {
+                            Id = -8,
+                            AllowNegativeBalance = false,
+                            CreatedOn = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DaysPerMonth = 0m,
+                            IsActive = true,
+                            IsDeleted = false,
+                            LeaveType = 8,
+                            MaxNegativeDays = 0,
+                            MaximumDaysPerYear = 3,
+                            RequiresBalance = false
+                        },
+                        new
+                        {
+                            Id = -9,
+                            AllowNegativeBalance = false,
+                            CreatedOn = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DaysPerMonth = 0m,
+                            IsActive = true,
+                            IsDeleted = false,
+                            LeaveType = 9,
+                            MaxNegativeDays = 0,
+                            MaximumDaysPerYear = 30,
+                            RequiresBalance = false
+                        });
+                });
+
             modelBuilder.Entity("MicroERP.Domin.Identity.UserPermissionAssignment", b =>
                 {
                     b.Property<string>("UserId")
@@ -611,6 +1122,17 @@ namespace MicroERP.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Domin.Entities.EmployeeDocument", b =>
+                {
+                    b.HasOne("Domin.Entities.Employee", "Employee")
+                        .WithMany("Documents")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
             modelBuilder.Entity("MicroERP.Domain.Audit.AuditLog", b =>
                 {
                     b.HasOne("Domin.Entities.ApplicationUser", "User")
@@ -657,6 +1179,84 @@ namespace MicroERP.Persistence.Migrations
                     b.Navigation("PermissionGroup");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("MicroERP.Domin.Entities.EmployeeLeave", b =>
+                {
+                    b.HasOne("Domin.Entities.ApplicationUser", "ApprovedByUser")
+                        .WithMany()
+                        .HasForeignKey("ApprovedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domin.Entities.Employee", "Employee")
+                        .WithMany("EmployeeLeaves")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domin.Entities.ApplicationUser", "RejectedByUser")
+                        .WithMany()
+                        .HasForeignKey("RejectedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ApprovedByUser");
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("RejectedByUser");
+                });
+
+            modelBuilder.Entity("MicroERP.Domin.Entities.EmployeeLeaveBalance", b =>
+                {
+                    b.HasOne("Domin.Entities.Employee", "Employee")
+                        .WithMany("LeaveBalances")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("MicroERP.Domin.Entities.EmployeeSpecialLeave", b =>
+                {
+                    b.HasOne("Domin.Entities.ApplicationUser", "ApprovedByUser")
+                        .WithMany()
+                        .HasForeignKey("ApprovedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domin.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domin.Entities.ApplicationUser", "RejectedByUser")
+                        .WithMany()
+                        .HasForeignKey("RejectedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ApprovedByUser");
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("RejectedByUser");
+                });
+
+            modelBuilder.Entity("MicroERP.Domin.Entities.LeaveAttachment", b =>
+                {
+                    b.HasOne("MicroERP.Domin.Entities.EmployeeLeave", "EmployeeLeave")
+                        .WithMany("Attachments")
+                        .HasForeignKey("EmployeeLeaveId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("MicroERP.Domin.Entities.EmployeeSpecialLeave", "EmployeeSpecialLeave")
+                        .WithMany("Attachments")
+                        .HasForeignKey("EmployeeSpecialLeaveId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("EmployeeLeave");
+
+                    b.Navigation("EmployeeSpecialLeave");
                 });
 
             modelBuilder.Entity("MicroERP.Domin.Identity.UserPermissionAssignment", b =>
@@ -741,6 +1341,15 @@ namespace MicroERP.Persistence.Migrations
                     b.Navigation("Employees");
                 });
 
+            modelBuilder.Entity("Domin.Entities.Employee", b =>
+                {
+                    b.Navigation("Documents");
+
+                    b.Navigation("EmployeeLeaves");
+
+                    b.Navigation("LeaveBalances");
+                });
+
             modelBuilder.Entity("MicroERP.Domain.Identity.ApplicationRole", b =>
                 {
                     b.Navigation("RolePermissionGroups");
@@ -758,6 +1367,16 @@ namespace MicroERP.Persistence.Migrations
                     b.Navigation("RolePermissionGroups");
 
                     b.Navigation("UserPermissionAssignments");
+                });
+
+            modelBuilder.Entity("MicroERP.Domin.Entities.EmployeeLeave", b =>
+                {
+                    b.Navigation("Attachments");
+                });
+
+            modelBuilder.Entity("MicroERP.Domin.Entities.EmployeeSpecialLeave", b =>
+                {
+                    b.Navigation("Attachments");
                 });
 #pragma warning restore 612, 618
         }

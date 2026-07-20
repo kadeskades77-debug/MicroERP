@@ -38,16 +38,20 @@ public class EmployeeController : BaseApiController
 
     [HttpPost]
     [Authorize(Policy = HRPermissions.Employee.Create)]
-    public async Task<IActionResult> Create(CreateEmployeeDto dto)
+    public async Task<IActionResult> Create(
+    CreateEmployeeDto dto,
+    CancellationToken cancellationToken)
     {
-        var result = await _employeeService.CreateAsync(dto);
+        var result = await _employeeService.CreateAsync(
+            dto,
+            cancellationToken);
+
 
         return CreatedAtAction(
              nameof(GetById),
              new { id = result.EmployeeId },
              result);
     }
-
     [HttpPut("{id}/transfer")]
     [Authorize(Policy = HRPermissions.Employee.TransferDepartment)]
     public async Task<IActionResult> Transfer(int id,TransferEmployeeDto dto)
@@ -133,5 +137,11 @@ public class EmployeeController : BaseApiController
             Success = true,
             Message = "Employee Deactivated successfully."
         });
+    }
+
+    [HttpGet("lookup")]
+    public async Task<IActionResult> Lookup()
+    {
+        return Ok(await _employeeService.GetLookupAsync());
     }
 }

@@ -16,6 +16,7 @@ public class HRDefinitionProvider : IPermissionDefinitionProvider
     {
         return
         [
+            //==============================Employees=======================
             new(
                 Group.Key,  
                 HRPermissions.Employee.View,
@@ -52,6 +53,8 @@ public class HRDefinitionProvider : IPermissionDefinitionProvider
                 "Allows deleting employees."
             ),
 
+
+//==============================Departments=======================
             new(Group.Key,
                 HRPermissions.Department.View,
                 "View Department",
@@ -79,7 +82,88 @@ public class HRDefinitionProvider : IPermissionDefinitionProvider
                 HRPermissions.Department.Delete,
                 "Delete Department",
                 "Allows deleting departments."
+            ),
+
+            //==============================EmployeeLeave=======================
+
+             new(
+                Group.Key,
+                HRPermissions.EmployeeLeave.View,
+                "View Employee Leave",
+                "Allows viewing Employee Leave."
+            ),
+
+            new(
+                Group.Key,
+                HRPermissions.EmployeeLeave.Create,
+                "Create Employee Leave",
+                "Allows creating Employee Leave."
+            ),
+              new(Group.Key,
+                HRPermissions.EmployeeLeave.Update,
+                "Update Employee Leave",
+                "Allows updating Employee Leave."
+            ),
+
+            new(Group.Key,
+                HRPermissions.EmployeeLeave.Delete,
+                "Delete Employee Leave",
+                "Allows deleting Employee Leave."
+            ),
+              new(Group.Key,
+                HRPermissions.EmployeeLeave.Approve ,
+                "Approve  Employee Leave",
+                "Allows Approveing Employee Leave."
+            ),
+              new(Group.Key,
+                HRPermissions.EmployeeLeave.Cancel ,
+                "Cancel  Employee Leave",
+                "Allows Canceling Employee Leave."
+            ),
+              new(Group.Key,
+                HRPermissions.EmployeeLeave.ViewBalance ,
+                "View Balance  Employee Leave",
+                "Allows Viewing Balance Employee Leave."
+            ),
+
+            new(Group.Key,
+                HRPermissions.EmployeeLeave.Reject ,
+                "Reject  Employee Leave",
+                "Allows Rejecting Employee Leave."
+            ),
+
+
+            //==============================EmployeeSpecialLeave=======================
+
+             new(
+                Group.Key,
+                HRPermissions.EmployeeSpecialLeave.View,
+                "View Employee Special Leave",
+                "Allows viewing Employee Special Leave."
+            ),
+
+            new(
+                Group.Key,
+                HRPermissions.EmployeeSpecialLeave.Create,
+                "Create Employee Special Leave",
+                "Allows creating Employee Special Leave."
+            ),
+              new(Group.Key,
+                HRPermissions.EmployeeSpecialLeave.Approve ,
+                "Approve  Employee Special Leave",
+                "Allows Approveing Employee Special Leave."
+            ),
+              new(Group.Key,
+                HRPermissions.EmployeeSpecialLeave.Cancel ,
+                "Cancel  Employee Special Leave",
+                "Allows Canceling Employee Special Leave."
+            ),
+            new(Group.Key,
+                HRPermissions.EmployeeSpecialLeave.Reject ,
+                "Reject  Employee Special Leave",
+                "Allows Rejecting Employee Special Leave."
             )
+
         ];
     }
 }

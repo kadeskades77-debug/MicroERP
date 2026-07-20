@@ -1,4 +1,5 @@
-﻿using MicroERP.Application.Common.Models;
+﻿using MicroERP.Application.Common.DTOs;
+using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.PermissionGroups.DTOs;
 
 namespace MicroERP.Application.Features.PermissionGroups.Interfaces;
@@ -12,4 +13,5 @@ public interface IPermissionGroupService
     Task<Result> RemovePermissionsFromGroupAsync(int groupId,RemovePermissionsFromGroupDto dto);
     Task<Result> UpdateAsync(int id, UpdatePermissionGroupDto dto);
     Task<Result> DeleteAsync(int id);
+    Task<List<LookupDto>> GetLookupAsync();
 }

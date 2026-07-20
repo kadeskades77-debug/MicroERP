@@ -93,4 +93,10 @@ public class PermissionsController : BaseApiController
         return HandleResult(
             await _permissionService.DeleteAsync(id));
     }
+
+    [HttpGet("lookup")]
+    public async Task<IActionResult> Lookup()
+    {
+        return Ok(await _permissionService.GetLookupAsync());
+    }
 }

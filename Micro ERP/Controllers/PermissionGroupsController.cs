@@ -78,4 +78,10 @@ public class PermissionGroupsController : BaseApiController
     {
         return HandleResult(await _service.DeleteAsync(id));
     }
+
+    [HttpGet("lookup")]
+    public async Task<IActionResult> Lookup()
+    {
+        return Ok(await _service.GetLookupAsync());
+    }
 }

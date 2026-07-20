@@ -51,4 +51,10 @@ public class RolesController : BaseApiController
     {
         return HandleResult(await _roleService.DeleteAsync(id));
     }
+
+    [HttpGet("lookup")]
+    public async Task<IActionResult> Lookup()
+    {
+        return Ok(await _roleService.GetLookupAsync());
+    }
 }

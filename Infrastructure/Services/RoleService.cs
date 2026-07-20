@@ -1,4 +1,5 @@
-﻿using MicroERP.Application.Common.Interfaces;
+﻿using MicroERP.Application.Common.DTOs;
+using MicroERP.Application.Common.Interfaces;
 using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.Audit.Interfaces;
 using MicroERP.Application.Features.Roles.DTOs;
@@ -294,6 +295,17 @@ public class RoleService : IRoleService
 
     //================ HELPERS =================
 
+    public async Task<List<LookupDto>> GetLookupAsync()
+    {
+        return await _roleManager.Roles
+            .OrderBy(x => x.Name)
+            .Select(x => new LookupDto
+            {
+                Value = x.Id,
+                Text = x.Name!
+            })
+            .ToListAsync();
+    }
 
     private static Result HandleIdentityResult(IdentityResult result)
     {
