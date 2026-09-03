@@ -1,5 +1,5 @@
-﻿using Domin.Entities;
-using MicroERP.Application.Features.Auth.Interfaces;
+﻿using MicroERP.Application.Features.Authentication.Auth.Interfaces;
+using MicroERP.Domin.Identity;
 using MicroERP.Infrastructure.Settings;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;

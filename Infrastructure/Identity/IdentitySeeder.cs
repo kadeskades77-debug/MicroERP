@@ -1,9 +1,8 @@
-﻿using Domin.Entities;
-using MicroERP.Application.Common.Models;
-using MicroERP.Application.Features.Auth.DTOs;
+﻿
 using MicroERP.Domain.Identity;
+using MicroERP.Domin.Identity;
 using Microsoft.AspNetCore.Identity;
-using static MicroERP.Application.Authorization.Permissions.IdentityPermissions;
+
 
 namespace MicroERP.Infrastructure.Identity;
 

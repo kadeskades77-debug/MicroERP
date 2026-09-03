@@ -1,5 +1,5 @@
-﻿using MicroERP.Application.Features.EmployeeLeaveBalances.Interfaces;
-using MicroERP.Domin.Entities;
+﻿using MicroERP.Application.Features.Leaves.EmployeeLeaveBalances.Interfaces;
+using MicroERP.Domin.Entities.EmployeeLeaves;
 using MicroERP.Domin.Enums;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,5 +1,4 @@
-﻿using Domin.Entities;
-using MicroERP.Domain.Identity;
+﻿using MicroERP.Domain.Identity;
 
 namespace MicroERP.Domin.Identity
 {

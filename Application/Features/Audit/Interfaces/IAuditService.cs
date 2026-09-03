@@ -15,5 +15,6 @@ public interface IAuditService
     string entityName,
     string? entityId = null,
     object? oldValues = null,
-    object? newValues = null);
+    object? newValues = null,
+    CancellationToken cancellationToken = default);
 }

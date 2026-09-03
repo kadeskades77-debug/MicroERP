@@ -1,9 +1,9 @@
 ﻿using MicroERP.Application.Common.Interfaces;
-using MicroERP.Application.Features.Permissions.DTOs;
-using MicroERP.Application.Features.Permissions.Interfaces;
 using MicroERP.Domain.Identity;
 using Microsoft.EntityFrameworkCore;
 using MicroERP.Application.Common.Mappings;
+using MicroERP.Application.Features.Authorization.Permissions.DTOs;
+using MicroERP.Application.Features.Authorization.Permissions.Interfaces;
 namespace MicroERP.Persistence.Queries
 {
     public class PermissionQueries : IPermissionQueries

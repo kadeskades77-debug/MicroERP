@@ -20,14 +20,20 @@ public class EmployeeDefinitionProvider
         return
         [
             new(
-                group: Group.Key,
+                groupKey: Group.Key,
                 key: EmployeePermissions.Profile.View,
                 name: "View Profile",
                 description: "Allows employee to view own profile."
             ),
+            new(
+                groupKey: Group.Key,
+                key: EmployeePermissions.Profile.MyAttendance,
+                name: " Attendance.My",
+                description: "Allows employee to view own Attendance."
+            ),
 
             new(
-                group: Group.Key,
+                groupKey: Group.Key,
                 key: EmployeePermissions.Profile.ChangePassword,
                 name: "Change Password",
                 description: "Allows employee to change own password."
@@ -49,6 +55,21 @@ public class EmployeeDefinitionProvider
                 HRPermissions.EmployeeLeave.Delete,
                 "Delete Employee Leave",
                 "Allows deleting Employee Leave."
+            ),
+
+            //============================== Attendance =======================
+            new(
+                Group.Key,
+                HRPermissions.Attendance.CheckIn,
+                "Record Employee Check-In",
+                "Allows recording employee check-in."
+            ),
+
+            new(
+                Group.Key,
+                HRPermissions.Attendance.CheckOut,
+                "Record Employee Check-Out",
+                "Allows recording employee check-out."
             ),
         ];
     }

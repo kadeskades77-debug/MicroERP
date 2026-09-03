@@ -7,6 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Entities\EmployeeAttendance\bkc0urlv.dal~" />
+    <None Remove="Entities\EmployeeLeaves\0isxm43b.2ke~" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Constants\" />
     <Folder Include="Events\" />
     <Folder Include="Interfaces\" />
@@ -18,7 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="8.6.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.28" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.26" />

@@ -1,4 +1,4 @@
-﻿using MicroERP.Domin.Entities;
+﻿using MicroERP.Domin.Entities.EmployeeLeaves;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

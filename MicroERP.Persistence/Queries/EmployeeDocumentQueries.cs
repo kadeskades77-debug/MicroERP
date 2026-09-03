@@ -3,7 +3,7 @@ using MicroERP.Application.Features.Documents.EmployeeDocuments.DTOs;
 using MicroERP.Application.Features.Documents.EmployeeDocuments.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace MicroERP.Infrastructure.Services.EmployeeDocuments;
+namespace MicroERP.Persistence.Queries;
 
 public class EmployeeDocumentQueries : IEmployeeDocumentQueries
 {

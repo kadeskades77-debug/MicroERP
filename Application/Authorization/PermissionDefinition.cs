@@ -3,18 +3,18 @@
 public class PermissionDefinition
 {
     public PermissionDefinition(
-        string group,
+        string groupKey,
         string key,
         string name,
         string? description = null)
     {
-        GroupName = group;
+        GroupKey = groupKey;
         Key = key;
         Name = name;
         Description = description;
     }
 
-    public string GroupName { get; }
+    public string GroupKey { get; }
 
     public string Key { get; }
 

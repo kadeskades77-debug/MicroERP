@@ -1,5 +1,5 @@
-﻿using Domin.Entities;
-using MicroERP.Application.Features.Departments.DTOs;
+﻿using MicroERP.Application.Features.Departments.DTOs;
+using MicroERP.Domin.Entities.Employees;
 
 namespace MicroERP.Application.Features.Departments.Interfaces
 {

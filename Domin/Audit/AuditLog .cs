@@ -1,5 +1,5 @@
-﻿using Domin.Entities;
-using MicroERP.Domin.Common;
+﻿using MicroERP.Domin.Common;
+using MicroERP.Domin.Identity;
 
 namespace MicroERP.Domain.Audit;
 

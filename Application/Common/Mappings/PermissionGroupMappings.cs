@@ -1,4 +1,4 @@
-﻿using MicroERP.Application.Features.PermissionGroups.DTOs;
+﻿using MicroERP.Application.Features.Authorization.PermissionGroups.DTOs;
 using MicroERP.Domain.Identity;
 
 namespace MicroERP.Application.Common.Mappings;

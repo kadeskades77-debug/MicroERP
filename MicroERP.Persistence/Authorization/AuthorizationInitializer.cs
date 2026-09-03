@@ -1,98 +1,171 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MicroERP.Application.Authorization.Interfaces;
 using MicroERP.Domain.Identity;
+
 namespace MicroERP.Persistence.Authorization;
 
 public class AuthorizationInitializer : IAuthorizationInitializer
 {
     private readonly ApplicationDbContext _context;
-    private readonly IEnumerable<IPermissionDefinitionProvider> _providers;
+    private readonly IPermissionDefinitionService _definitionService;
 
     public AuthorizationInitializer(
         ApplicationDbContext context,
-        IEnumerable<IPermissionDefinitionProvider> providers)
+        IPermissionDefinitionService definitionService)
     {
         _context = context;
-        _providers = providers;
+        _definitionService = definitionService;
     }
 
     public async Task InitializeAsync()
     {
-        foreach (var provider in _providers)
-        {
-            await EnsurePermissionGroupAsync(provider);
+        // =========================================================
+        // Ensure Permission Groups
+        // =========================================================
 
-            await EnsurePermissionsAsync(provider);
+        await EnsurePermissionGroupsAsync();
 
-            await EnsureGroupPermissionsAsync(provider);
-        }
+        // =========================================================
+        // Ensure Permissions
+        // =========================================================
+
+        await EnsurePermissionsAsync();
+
+        // =========================================================
+        // Ensure Group Permissions
+        // =========================================================
+
+        await EnsureGroupPermissionsAsync();
+
+        // =========================================================
+        // Save Changes
+        // =========================================================
 
         await _context.SaveChangesAsync();
     }
 
-    private async Task EnsurePermissionGroupAsync(IPermissionDefinitionProvider provider)
+    // =============================================================
+    // Permission Groups
+    // =============================================================
+
+    private async Task EnsurePermissionGroupsAsync()
     {
-        var definition = provider.Group;
+        var groups =
+            _definitionService
+                .GetGroups()
+                .ToList();
 
-        var group = await _context.PermissionGroups
-            .FirstOrDefaultAsync(x => x.Key == definition.Key);
-
-        if (group is null)
+        foreach (var definition in groups)
         {
-            await _context.PermissionGroups.AddAsync(new PermissionGroup
+            var group =
+                await _context.PermissionGroups
+                    .FirstOrDefaultAsync(
+                        x => x.Key == definition.Key);
+
+            if (group is null)
             {
-                Name = definition.Name,
-                Description = definition.Description,
-                IsSystem = definition.IsSystem
-            });
+                await _context.PermissionGroups.AddAsync(
+                    new PermissionGroup
+                    {
+                        Key = definition.Key,
+                        Name = definition.Name,
+                        Description = definition.Description,
+                        IsSystem = definition.IsSystem
+                    });
 
-            return;
+                continue;
+            }
+
+            group.Name = definition.Name;
+            group.Description = definition.Description;
+            group.IsSystem = definition.IsSystem;
         }
-
-        group.Name = definition.Name;
-        group.Description = definition.Description;
-        group.IsSystem = definition.IsSystem;
     }
 
-    private async Task EnsurePermissionsAsync(IPermissionDefinitionProvider provider)
+    // =============================================================
+    // Permissions
+    // =============================================================
+
+    private async Task EnsurePermissionsAsync()
     {
-        foreach (var definition in provider.GetPermissions())
+        var permissions =
+            _definitionService
+                .GetPermissions()
+                .ToList();
+
+        foreach (var definition in permissions)
         {
-            var permission = await _context.Permissions
-                .FirstOrDefaultAsync(x => x.Key == definition.Key);
+            var permission =
+                await _context.Permissions
+                    .FirstOrDefaultAsync(
+                        x => x.Key == definition.Key);
 
             if (permission is null)
             {
-                permission = new Permission
-                {
-                    Key = definition.Key,
-                    Name = definition.Name,
-                    Description = definition.Description
-                };
+                await _context.Permissions.AddAsync(
+                    new Permission
+                    {
+                        Key = definition.Key,
+                        Name = definition.Name,
+                        Description = definition.Description
+                    });
 
-                await _context.Permissions.AddAsync(permission);
+                continue;
             }
-            else
-            {
-                permission.Name = definition.Name;
-                permission.Description = definition.Description;
-            }
+
+            permission.Name = definition.Name;
+            permission.Description = definition.Description;
         }
     }
-    private async Task EnsureGroupPermissionsAsync(IPermissionDefinitionProvider provider)
+
+    // =============================================================
+    // Group Permissions
+    // =============================================================
+
+    private async Task EnsureGroupPermissionsAsync()
     {
-        var group = await _context.PermissionGroups
-            .FirstAsync(x => x.Key == provider.Group.Key);
+        var groups =
+            _definitionService
+                .GetGroups()
+                .ToList();
 
-        foreach (var definition in provider.GetPermissions())
+        var permissions =
+            _definitionService
+                .GetPermissions()
+                .ToList();
+
+        foreach (var permissionDefinition in permissions)
         {
-            var permission = await _context.Permissions
-                .FirstAsync(x => x.Key == definition.Key);
+            var groupDefinition =
+           groups.FirstOrDefault(
+        x => x.Key.Equals(
+            permissionDefinition.GroupKey,
+            StringComparison.OrdinalIgnoreCase));
 
-            var exists = await _context.PermissionGroupPermissions
-                .AnyAsync(x =>
-                    x.PermissionGroupId == group.Id &&
-                    x.PermissionId == permission.Id);
+            if (groupDefinition is null)
+                continue;
+
+            var group =
+                await _context.PermissionGroups
+                    .FirstOrDefaultAsync(
+                        x => x.Key == groupDefinition.Key);
+
+            if (group is null)
+                continue;
+
+            var permission =
+                await _context.Permissions
+                    .FirstOrDefaultAsync(
+                        x => x.Key == permissionDefinition.Key);
+
+            if (permission is null)
+                continue;
+
+            var exists =
+                await _context.PermissionGroupPermissions
+                    .AnyAsync(x =>
+                        x.PermissionGroupId == group.Id &&
+                        x.PermissionId == permission.Id);
 
             if (exists)
                 continue;

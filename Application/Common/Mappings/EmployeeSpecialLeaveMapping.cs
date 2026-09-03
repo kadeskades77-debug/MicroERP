@@ -1,5 +1,5 @@
-﻿using MicroERP.Application.Features.EmployeeSpecialLeaves.DTOs;
-using MicroERP.Domin.Entities;
+﻿using MicroERP.Application.Features.Leaves.EmployeeSpecialLeaves.DTOs;
+using MicroERP.Domin.Entities.EmployeeLeaves;
 
 
 namespace MicroERP.Application.Common.Mappings;

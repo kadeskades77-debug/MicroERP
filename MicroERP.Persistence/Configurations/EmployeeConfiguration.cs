@@ -1,4 +1,4 @@
-﻿using Domin.Entities;
+﻿using MicroERP.Domin.Entities.Employees;
 using MicroERP.Domin.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -35,6 +35,11 @@ namespace MicroERP.Persistence.Configurations
                 .WithOne(u => u.Employee)
                 .HasForeignKey<Employee>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(x => x.WorkSchedule)
+          .WithMany()
+          .HasForeignKey(x => x.WorkScheduleId)
+          .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasIndex(x => x.UserId)
                 .IsUnique();

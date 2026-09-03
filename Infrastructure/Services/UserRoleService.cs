@@ -1,12 +1,12 @@
-﻿using Domin.Entities;
-using MicroERP.Application.Authorization.Interfaces;
+﻿using MicroERP.Application.Authorization.Interfaces;
 using MicroERP.Application.Common.Interfaces;
 using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.Audit.Interfaces;
-using MicroERP.Application.Features.Roles.DTOs;
-using MicroERP.Application.Features.Roles.Interfaces;
+using MicroERP.Application.Features.Authentication.Roles.DTOs;
+using MicroERP.Application.Features.Authentication.Roles.Interfaces;
 using MicroERP.Domain.Audit;
 using MicroERP.Domain.Identity;
+using MicroERP.Domin.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 

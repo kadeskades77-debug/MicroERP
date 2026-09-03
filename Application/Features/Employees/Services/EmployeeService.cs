@@ -1,20 +1,20 @@
-﻿using Domin.Entities;
-using MicroERP.Application.Common.DTOs;
+﻿using MicroERP.Application.Common.DTOs;
 using MicroERP.Application.Common.Exceptions;
 using MicroERP.Application.Common.Interfaces;
 using MicroERP.Application.Common.Mappings;
 using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.Audit.Interfaces;
-using MicroERP.Application.Features.Auth.DTOs;
-using MicroERP.Application.Features.Auth.Interfaces;
+using MicroERP.Application.Features.Authentication.Auth.DTOs;
+using MicroERP.Application.Features.Authentication.Auth.Interfaces;
 using MicroERP.Application.Features.Departments.Interfaces;
-using MicroERP.Application.Features.EmployeeLeaveBalances.Interfaces;
 using MicroERP.Application.Features.Employees.DTOs;
 using MicroERP.Application.Features.Employees.Interfaces;
+using MicroERP.Application.Features.Leaves.EmployeeLeaveBalances.Interfaces;
 using MicroERP.Domain.Audit;
+using MicroERP.Domin.Entities.Employees;
 using MicroERP.Domin.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Threading;
+
 
 namespace MicroERP.Application.Features.Employees.Services
 {
@@ -139,23 +139,26 @@ namespace MicroERP.Application.Features.Employees.Services
                     await _context.SaveChangesAsync();
 
 
-                    await _auditService.LogAsync(
-                        AuditActions.Create,
-                        nameof(Employee),
-                        employee.Id.ToString(),
-                        null,
-                        new
-                        {
-                            employee.Phone,
-                            employee.Salary,
-                            employee.DepartmentId,
-                            employee.UserId
-                        });
+                  
 
 
-                    await _context.SaveChangesAsync();
                     await _leaveBalanceGenerator
-           .GenerateForEmployeeAsync(employee.Id, DateTime.UtcNow.Year, cancellationToken);
+           .GenerateForEmployeeAsync(employee.Id, DateTime.UtcNow.Year, 
+                  cancellationToken);
+
+
+                    await _auditService.LogAsync(
+                      AuditActions.Create,
+                      nameof(Employee),
+                      employee.Id.ToString(),
+                      null,
+                      new
+                      {
+                          employee.Phone,
+                          employee.Salary,
+                          employee.DepartmentId,
+                          employee.UserId
+                      });
 
 
                     return new CreateEmployeeResultDto
@@ -304,6 +307,7 @@ namespace MicroERP.Application.Features.Employees.Services
                 };
 
                 employee.Salary = dto.Salary;
+                await _context.SaveChangesAsync();
 
                 await _auditService.LogAsync(
                     AuditActions.Update,
@@ -314,7 +318,7 @@ namespace MicroERP.Application.Features.Employees.Services
                     {
                         employee.Salary
                     });
-                await _context.SaveChangesAsync();
+          
                 return Result.Succeeded(
                     "Employee salary updated successfully.");
             });
@@ -371,7 +375,7 @@ namespace MicroERP.Application.Features.Employees.Services
                 if (!authResult.Success)
                     throw new BusinessException(authResult.Message);
             }
-
+            await _context.SaveChangesAsync();
             await _auditService.LogAsync(
                 AuditActions.Update,
                 nameof(Employee),
@@ -384,7 +388,7 @@ namespace MicroERP.Application.Features.Employees.Services
                     employee.Phone
                 });
 
-            await _context.SaveChangesAsync();
+        
 
             return Result.Succeeded(
                 "Employee updated successfully.");
@@ -430,7 +434,7 @@ namespace MicroERP.Application.Features.Employees.Services
 
             employee.IsDeleted = true;
             employee.IsActive = false;
-
+            await _context.SaveChangesAsync();
 
             await _auditService.LogAsync(
                 AuditActions.Delete,
@@ -443,7 +447,7 @@ namespace MicroERP.Application.Features.Employees.Services
                 });
 
 
-            await _context.SaveChangesAsync();
+          
         }
         public async Task RestoreAsync(int id)
         {
@@ -470,7 +474,7 @@ namespace MicroERP.Application.Features.Employees.Services
 
             employee.IsDeleted = false;
             employee.IsActive = true;
-
+            await _context.SaveChangesAsync();
 
             await _auditService.LogAsync(
                 AuditActions.Restore,
@@ -484,7 +488,7 @@ namespace MicroERP.Application.Features.Employees.Services
                 });
 
 
-            await _context.SaveChangesAsync();
+         
         }
         public async Task ActivateAsync(int id)
         {

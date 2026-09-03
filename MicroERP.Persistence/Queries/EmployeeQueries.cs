@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MicroERP.Application.Common.Interfaces;
-using Domin.Entities;
 using MicroERP.Application.Features.Employees.Interfaces;
 using MicroERP.Application.Features.Employees.DTOs;
 using MicroERP.Application.Common.Mappings;
+using MicroERP.Domin.Entities.Employees;
 namespace MicroERP.Persistence.Queries;
 
 public class EmployeeQueries : IEmployeeQueries
@@ -31,7 +31,9 @@ public class EmployeeQueries : IEmployeeQueries
     public async Task<Employee?> GetByIdAsync(int id)
     {
         return await _context.Employees
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .Include(x => x.User)
+            .FirstOrDefaultAsync(
+                x => x.Id == id);
     }
 
 
@@ -54,6 +56,7 @@ public class EmployeeQueries : IEmployeeQueries
     public async Task<Employee?> GetByUserIdAsync(string userId)
     {
         return await _context.Employees
+            .Include(x => x.User)
             .FirstOrDefaultAsync(x => x.UserId == userId);
     }
 

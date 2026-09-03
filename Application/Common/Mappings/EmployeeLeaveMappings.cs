@@ -1,5 +1,5 @@
-﻿using MicroERP.Application.Features.EmployeeLeaves.DTOs;
-using MicroERP.Domin.Entities;
+﻿using MicroERP.Application.Features.Leaves.EmployeeLeaves.DTOs;
+using MicroERP.Domin.Entities.EmployeeLeaves;
 
 namespace MicroERP.Application.Common.Mappings
 {

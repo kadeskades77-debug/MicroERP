@@ -1,48 +1,29 @@
-﻿using Domin.Entities;
-using MicroERP.API.Middlewares;
+﻿using MicroERP.API.Middlewares;
+using MicroERP.Application;
 using MicroERP.Application.Authorization.Interfaces;
 using MicroERP.Application.Authorization.Providers;
-using MicroERP.Application.Common.Interfaces;
-using MicroERP.Application.Features.Audit.Interfaces;
-using MicroERP.Application.Features.Auth.Interfaces;
-using MicroERP.Application.Features.Departments.Interfaces;
-using MicroERP.Application.Features.Departments.Services;
-using MicroERP.Application.Features.Documents.EmployeeDocuments.Interfaces;
-using MicroERP.Application.Features.Documents.EmployeeDocuments.Service;
-using MicroERP.Application.Features.Documents.LeaveDocuments.Interfaces;
-using MicroERP.Application.Features.Documents.LeaveDocuments.Service;
-using MicroERP.Application.Features.EmployeeLeaveBalances.Interfaces;
-using MicroERP.Application.Features.EmployeeLeaveBalances.Services;
-using MicroERP.Application.Features.EmployeeLeaves.Interfaces;
-using MicroERP.Application.Features.EmployeeLeaves.Services;
-using MicroERP.Application.Features.Employees.Interfaces;
-using MicroERP.Application.Features.Employees.Services;
-using MicroERP.Application.Features.EmployeeSpecialLeaves.Interfaces;
-using MicroERP.Application.Features.EmployeeSpecialLeaves.Services;
-using MicroERP.Application.Features.PermissionGroups.Interfaces;
-using MicroERP.Application.Features.Permissions.Interfaces;
-using MicroERP.Application.Features.Roles.Interfaces;
-using MicroERP.Application.Features.UserPermissions.Interfaces;
+using MicroERP.Application.Common.Files;
+using MicroERP.Application.Features.EmployeeAttendance.Attendance.Interfaces;
+using MicroERP.Application.Features.EmployeeAttendance.Attendance.Services;
 using MicroERP.Domain.Identity;
+using MicroERP.Domin.Identity;
+using MicroERP.Infrastructure;
 using MicroERP.Infrastructure.Authorization;
-using MicroERP.Infrastructure.BackgroundJobs;
 using MicroERP.Infrastructure.Identity;
-using MicroERP.Infrastructure.Security;
-using MicroERP.Infrastructure.Services;
-using MicroERP.Infrastructure.Services.EmployeeDocuments;
 using MicroERP.Infrastructure.Services.Files;
 using MicroERP.Infrastructure.Settings;
 using MicroERP.Persistence;
 using MicroERP.Persistence.Authorization;
-using MicroERP.Persistence.Queries;
-using MicroERP.Persistence.Services;
+using MicroERP.Persistence.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using QuestPDF.Infrastructure;
 using System.Text;
+using System.Text.Json.Serialization;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -51,19 +32,24 @@ var builder = WebApplication.CreateBuilder(args);
 
 #region Database
 
-var connectionString =
-    builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddPersistence(builder.Configuration);
+
+builder.Services.AddApplication();
+
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.Configure<FileValidationSettings>(
+    builder.Configuration.GetSection("FileValidation"));
+
+#endregion
 
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseSqlServer(connectionString);
-
-    options.EnableSensitiveDataLogging();
-});
 
 
-builder.Services.AddPersistence(
+#region Application + Infrastructure
+
+builder.Services.AddApplication();
+
+builder.Services.AddInfrastructure(
     builder.Configuration);
 
 #endregion
@@ -84,6 +70,7 @@ builder.Services.Configure<IdentityOptions>(options =>
 {
     options.Lockout.AllowedForNewUsers = true;
     options.Lockout.MaxFailedAccessAttempts = 3;
+
     options.Lockout.DefaultLockoutTimeSpan =
         TimeSpan.FromMinutes(10);
 });
@@ -93,6 +80,7 @@ builder.Services.Configure<IdentityOptions>(options =>
 builder.Services.Configure<JwtSettings>(
     builder.Configuration
         .GetSection("JwtSettings"));
+
 
 
 var jwtSettings =
@@ -160,73 +148,37 @@ builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 
+
 builder.Services.AddSwaggerGen(c =>
 {
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header
-    });
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
+    c.AddSecurityDefinition("Bearer",
+        new OpenApiSecurityScheme
         {
-            new OpenApiSecurityScheme
+            Name = "Authorization",
+            Type = SecuritySchemeType.Http,
+            Scheme = "Bearer",
+            BearerFormat = "JWT",
+            In = ParameterLocation.Header
+        });
+
+
+    c.AddSecurityRequirement(
+        new OpenApiSecurityRequirement
+        {
             {
-                Reference = new OpenApiReference
+                new OpenApiSecurityScheme
                 {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
+                    Reference =
+                    new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                Array.Empty<string>()
+            }
+        });
 });
-
-#endregion
-
-
-
-
-#region Application Services
-
-
-builder.Services.AddMemoryCache();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<IdentityService, dentityService>();
-builder.Services.AddScoped<ICredentialGenerator,CredentialsGenerator>();
-builder.Services.AddScoped<IApplicationDbContext,ApplicationDbContext>();
-builder.Services.AddScoped<IUnitOfWork,UnitOfWork>();
-builder.Services.AddScoped<IAuthorizationManager,AuthorizationManager>();
-builder.Services.AddScoped<IDepartmentService,DepartmentService>();
-builder.Services.AddScoped<IDepartmentQueries, DepartmentQueries>();
-builder.Services.AddScoped<IEmployeeService, EmployeeService>();
-builder.Services.AddScoped<IEmployeeQueries, EmployeeQueries>();
-builder.Services.AddScoped<IUserRoleService,UserRoleService>();
-builder.Services.AddScoped<IRoleService,RoleService>();
-builder.Services.AddScoped<IUserPermissionAssignmentService,UserPermissionAssignmentService>();
-builder.Services.AddScoped<IAuditService,AuditService>();
-builder.Services.AddScoped<IPermissionService, PermissionService>();
-builder.Services.AddScoped<IPermissionGroupQueries,PermissionGroupQueries>();
-builder.Services.AddScoped<IPermissionQueries,PermissionQueries>();
-builder.Services.AddScoped<IEmployeeDocumentQueries, EmployeeDocumentQueries>();
-builder.Services.AddScoped<IFileStorageService, FileStorageService>();
-builder.Services.AddHostedService<YearlyLeaveBalanceJob>();
-builder.Services.AddScoped<IEmployeeDocumentService, EmployeeDocumentService>();
-builder.Services.AddScoped<IEmployeeLeaveQueries, EmployeeLeaveQueries>();
-builder.Services.AddScoped<IEmployeeLeaveService, EmployeeLeaveService>();
-builder.Services.AddScoped<IEmployeeSpecialLeaveService, EmployeeSpecialLeaveService>();
-builder.Services.AddScoped<IEmployeeSpecialLeaveQueries, EmployeeSpecialLeaveQueries>();
-builder.Services.AddScoped<IEmployeeLeaveBalanceQueries,EmployeeLeaveBalanceQueries>();
-builder.Services.AddScoped<IEmployeeLeaveBalanceService, EmployeeLeaveBalanceService>();
-builder.Services.AddScoped<ILeaveBalanceGenerator, LeaveBalanceGeneratorService>();
-builder.Services.AddScoped<ILeaveAttachmentService, LeaveAttachmentService>();
 
 #endregion
 
@@ -239,21 +191,26 @@ builder.Services.AddScoped<
     IPermissionDefinitionProvider,
     HRDefinitionProvider>();
 
+
 builder.Services.AddScoped<
     IPermissionDefinitionProvider,
     RolePermissionDefinitionProvider>();
+
 
 builder.Services.AddScoped<
     IPermissionDefinitionProvider,
     IdentityDefinitionProvider>();
 
+
 builder.Services.AddScoped<
     IPermissionDefinitionProvider,
     EmployeeDefinitionProvider>();
 
+
 builder.Services.AddScoped<
     IPermissionDefinitionProvider,
     AuditDefinitionProvider>();
+
 
 builder.Services.AddScoped<
     IPermissionDefinitionProvider,
@@ -266,20 +223,83 @@ builder.Services.AddScoped<
 
 #region Seeders
 
-builder.Services.AddScoped<
-    PermissionSeeder>();
+builder.Services.AddScoped<PermissionSeeder>();
 
 #endregion
 
+//QuestPDF.Settings.License = LicenseType.Evaluation;
 
-
-
+QuestPDF.Settings.License = LicenseType.Community;
+//builder.Services.AddHostedService<AttendanceDailyJob>();
+//builder.Services.AddHostedService<AttendanceRecalculateJob>();
+builder.Services.AddScoped<IAttendanceAbsentService, AttendanceAbsentService>();
+//builder.Services.AddHostedService<AttendancePerformanceMonthlyJob>();
+builder.Services.AddMemoryCache();
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter());
+    });
 
 var app = builder.Build();
 
 
-#region Database Seed
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider
+        .GetRequiredService<ApplicationDbContext>();
 
+    //await context.Database.ExecuteSqlRawAsync(@"
+    //        DELETE FROM Payrolls;
+    //        DBCC CHECKIDENT ('Payrolls', RESEED, 0);
+    //    ");
+
+    //await context.Database.ExecuteSqlRawAsync(@"
+    //        DELETE FROM PayrollItems;
+    //        DBCC CHECKIDENT ('PayrollItems', RESEED, 0);
+    //    ");
+
+    //await context.Database.ExecuteSqlRawAsync(@"
+    //    DELETE FROM AttendanceRecords;
+    //    DBCC CHECKIDENT ('AttendanceRecords', RESEED, 0);
+    //");
+
+
+    //await context.Database.ExecuteSqlRawAsync(@"
+    //    DELETE FROM AttendanceTransactions;
+    //    DBCC CHECKIDENT ('AttendanceTransactions', RESEED, 0);
+    //");
+    //await context.Database.ExecuteSqlRawAsync(@"
+    //    DELETE FROM AttendanceLogs;
+    //    DBCC CHECKIDENT ('AttendanceLogs', RESEED, 0);
+    //");
+
+    //await context.Database.ExecuteSqlRawAsync(@"
+    //        DELETE FROM PayrollAdjustments;
+    //        DBCC CHECKIDENT ('PayrollAdjustments', RESEED, 0);
+    //    ");
+
+    //await context.Database.ExecuteSqlRawAsync(@"
+    //    DELETE FROM EmployeeOvertimes;
+    //    DBCC CHECKIDENT ('EmployeeOvertimes', RESEED, 0);
+    //");
+
+    //await context.Database.ExecuteSqlRawAsync(@"
+    //   DELETE FROM AttendancePerformances;
+    //    DBCC CHECKIDENT ('AttendancePerformances', RESEED, 0);
+    //");
+
+}
+
+
+
+
+
+
+
+#region Database Seed
 
 using (var scope = app.Services.CreateScope())
 {
@@ -287,25 +307,16 @@ using (var scope = app.Services.CreateScope())
 
 
     var userManager =
-        services.GetRequiredService<
-            UserManager<ApplicationUser>>();
+        services.GetRequiredService<UserManager<ApplicationUser>>();
 
 
     var roleManager =
-        services.GetRequiredService<
-            RoleManager<ApplicationRole>>();
+        services.GetRequiredService<RoleManager<ApplicationRole>>();
 
 
-
-    await IdentitySeeder.SeedAsync(
-        userManager,
-        roleManager);
-}
-
-
-
-using (var scope = app.Services.CreateScope())
-{
+    //await IdentitySeeder.SeedAsync(
+    //    userManager,
+    //    roleManager);
     var seeder =
         scope.ServiceProvider
             .GetRequiredService<PermissionSeeder>();
@@ -314,19 +325,38 @@ using (var scope = app.Services.CreateScope())
     var providers =
         scope.ServiceProvider
             .GetServices<IPermissionDefinitionProvider>();
+    var Multi =
+        scope.ServiceProvider
+            .GetServices<IMultiPermissionDefinitionProvider>();
 
 
-    await seeder.SeedAsync(providers);
+    await seeder.SeedAsync(providers, Multi);
 }
+
+
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider
+        .GetRequiredService<ApplicationDbContext>();
+
+    // await AttendancePolicySeeder.SeedAsync(context);
+     //await EmployeeEvaluationSeeder.SeedAsync(context);
+   // await AttendanceLogSeeder.SeedAsync(context,app.Services);
+    // await SalaryComponentSeeder.SeedAsync(context);
+    // await EmployeeSalaryComponentSeeder.SeedAsync(context);
+    // await PayrollAdjustmentSeeder.SeedAsync(context);
+    //   await PayrollPolicySeeder.Seed(context);
+     //  await EmployeeBankAccountSeeder.Seed(context);
+}
+
 
 #endregion
 
 
 
 
-
 #region Middleware
-
 
 if (app.Environment.IsDevelopment())
 {
@@ -348,9 +378,7 @@ app.UseMiddleware<ExceptionMiddleware>();
 
 app.MapControllers();
 
-
 #endregion
-
 
 
 app.Run();

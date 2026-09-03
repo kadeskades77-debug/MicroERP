@@ -1,10 +1,9 @@
-﻿using Domin.Entities;
-using MicroERP.Application.Authorization.Interfaces;
+﻿using MicroERP.Application.Authorization.Interfaces;
 using MicroERP.Application.Common.Interfaces;
 using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.Audit.Interfaces;
-using MicroERP.Application.Features.UserPermissions.DTOs;
-using MicroERP.Application.Features.UserPermissions.Interfaces;
+using MicroERP.Application.Features.Authorization.UserPermissions.DTOs;
+using MicroERP.Application.Features.Authorization.UserPermissions.Interfaces;
 using MicroERP.Domain.Audit;
 using MicroERP.Domin.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -94,19 +93,21 @@ public class UserPermissionAssignmentService
                     UserId = userId,
                     PermissionGroupId = group.Id
                 });
-            await _auditService.LogAsync(
-           AuditActions.AssignPermissionGroup,
-           nameof(ApplicationUser),
-           userId,
-           null,
-           new
-           {
-               PermissionGroup = permissionGroupKey
-           });
+          //  await _context.SaveChangesAsync();
+          
 
             await _authorizationManager
                 .ClearUserPermissionsCacheAsync(userId);
 
+           //   await _auditService.LogAsync(
+           //AuditActions.AssignPermissionGroup,
+           //nameof(ApplicationUser),
+           //userId,
+           //null,
+           //new
+           //{
+           //    PermissionGroup = permissionGroupKey
+           //});
 
             return Result.Succeeded(
                 "Permission group added successfully.");

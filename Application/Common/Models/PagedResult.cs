@@ -2,6 +2,21 @@
 
 public class PagedResult<T>
 {
+    public PagedResult()
+    {
+    }
+
+    public PagedResult(
+        IReadOnlyList<T> items,
+        int totalCount,
+        int pageNumber,
+        int pageSize)
+    {
+        Items = items;
+        TotalCount = totalCount;
+        PageNumber = pageNumber;
+        PageSize = pageSize;
+    }
     public IReadOnlyList<T> Items { get; set; } = [];
 
     public int PageNumber { get; set; }

@@ -1,5 +1,6 @@
 ﻿using MicroERP.Application.Common.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Micro_ERP.Controllers;
 
@@ -20,5 +21,19 @@ public abstract class BaseApiController : ControllerBase
             return BadRequest(result);
 
         return Ok(result);
+    }
+
+    protected string GetCurrentUserId()
+    {
+        var userId = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new UnauthorizedAccessException(
+                "User not authenticated.");
+        }
+
+        return userId;
     }
 }

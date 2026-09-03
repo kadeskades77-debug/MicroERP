@@ -7,6 +7,8 @@ public static class EmployeePermissions
         public const string View =
             "Profile.ViewProfile";
 
+        public const string MyAttendance = "Attendance.My";
+
         public const string ChangePassword =
             "Profile.ChangePassword";
 

@@ -1,12 +1,12 @@
-﻿using Domin.Entities;
-using MicroERP.Application.Authorization.Interfaces;
+﻿using MicroERP.Application.Authorization.Interfaces;
 using MicroERP.Application.Common.Interfaces;
 using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.Audit.Interfaces;
-using MicroERP.Application.Features.Auth.DTOs;
-using MicroERP.Application.Features.Auth.Interfaces;
+using MicroERP.Application.Features.Authentication.Auth.DTOs;
+using MicroERP.Application.Features.Authentication.Auth.Interfaces;
 using MicroERP.Domain.Audit;
 using MicroERP.Domain.Identity;
+using MicroERP.Domin.Identity;
 using MicroERP.Infrastructure.Identity;
 using MicroERP.Infrastructure.Security;
 using Microsoft.AspNetCore.Identity;
@@ -118,7 +118,17 @@ public class dentityService : IdentityService
             FullName = user.FullName,
             Roles = roles.ToList()
         };
-
+        await _auditService.LogAsync(
+            AuditActions.Login,
+            nameof(ApplicationUser),
+            user.Id,
+            null,
+            new
+            {
+                user.UserName,
+                user.Email,
+                user.FullName
+            });
         return Result<AuthResponseDto>.Succeeded(
             response,
             "Login successful.");

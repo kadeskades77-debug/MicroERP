@@ -1,4 +1,4 @@
-﻿using Domin.Entities;
+﻿using MicroERP.Domin.Entities.Employees;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

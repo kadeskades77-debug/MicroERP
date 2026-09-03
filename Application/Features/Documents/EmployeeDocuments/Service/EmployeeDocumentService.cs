@@ -1,59 +1,155 @@
-﻿using Domin.Entities;
+﻿using MicroERP.Application.Common.Files;
+using MicroERP.Application.Common.Files.Interfaces;
 using MicroERP.Application.Common.Interfaces;
 using MicroERP.Application.Common.Models;
+using MicroERP.Application.Features.Audit.Interfaces;
 using MicroERP.Application.Features.Documents.EmployeeDocuments.DTOs;
 using MicroERP.Application.Features.Documents.EmployeeDocuments.Interfaces;
+using MicroERP.Domain.Audit;
+using MicroERP.Domin.Entities.Employees;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
 {
  
     public class EmployeeDocumentService : IEmployeeDocumentService
     {
-        private readonly IApplicationDbContext _context;
         private readonly IFileStorageService _fileStorage;
+        private readonly IFileValidationService _fileValidationService;
+        private readonly IApplicationDbContext _context;
+        private readonly IAuditService _auditService;
+        private readonly FileValidationOptions _fileValidationOptions;
+
 
         public EmployeeDocumentService(
-            IApplicationDbContext context, IFileStorageService fileStorage)
+            IApplicationDbContext context, IFileStorageService fileStorage, IFileValidationService fileValidationService, 
+            IAuditService auditService,
+            IOptions<FileValidationSettings> fileValidationOptions)
+
         {
             _context = context;
             _fileStorage = fileStorage;
+            _fileValidationService = fileValidationService;
+            _auditService = auditService;
+            _fileValidationOptions = fileValidationOptions.Value.EmployeeDocuments;
         }
 
 
         public async Task<Result<EmployeeDocumentDto>> CreateAsync(
-     int employeeId,
-     CreateEmployeeDocumentDto dto,
-     CancellationToken cancellationToken = default)
+        int employeeId,
+        CreateEmployeeDocumentDto dto,
+        CancellationToken cancellationToken = default)
         {
-            var employeeExists = await _context.Employees
-                .AnyAsync(x => x.Id == employeeId, cancellationToken);
+            // =========================================================
+            // Validate Request
+            // =========================================================
 
+            if (employeeId <= 0)
+            {
+                return Result<EmployeeDocumentDto>.Failure(
+                    "Invalid employee ID.");
+            }
+
+            if (dto is null)
+            {
+                return Result<EmployeeDocumentDto>.Failure(
+                    "Request is required.");
+            }
+
+            if (dto.File is null)
+            {
+                return Result<EmployeeDocumentDto>.Failure(
+                    "File is required.");
+            }
+
+            // =========================================================
+            // Validate Dates
+            // =========================================================
+
+            if (dto.IssueDate.HasValue &&
+                dto.ExpiryDate.HasValue &&
+                dto.ExpiryDate.Value < dto.IssueDate.Value)
+            {
+                return Result<EmployeeDocumentDto>.Failure(
+                    "Expiry date cannot be earlier than issue date.");
+            }
+
+            // =========================================================
+            // Validate Employee
+            // =========================================================
+
+            var employeeExists =
+                await _context.Employees
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.Id == employeeId &&
+                            x.IsActive &&
+                            !x.IsDeleted,
+                        cancellationToken);
 
             if (!employeeExists)
+            {
                 return Result<EmployeeDocumentDto>.Failure(
-                    "Employee not found");
+                    "Employee not found or inactive.");
+            }
 
+            // =========================================================
+            // Validate File
+            // =========================================================
 
-            var filePath = await _fileStorage.SaveFileAsync(
-                dto.File,
-                "Employees/Documents",
-                cancellationToken);
+            var validationResult =
+               await _fileValidationService.ValidateAsync(
+                   dto.File,
+                   _fileValidationOptions,
+                   cancellationToken);
 
+            if (!validationResult.Success)
+            {
+                return Result<EmployeeDocumentDto>.Failure(
+                    validationResult.Message);
+            }
+
+            // =========================================================
+            // Save Physical File
+            // =========================================================
+
+            var fileResult =
+                await _fileStorage.SaveFileAsync(
+                    dto.File,
+                    "Employees/Documents",
+                    cancellationToken);
+
+            if (!fileResult.Success ||
+                string.IsNullOrWhiteSpace(fileResult.Data))
+            {
+                return Result<EmployeeDocumentDto>.Failure(
+                    fileResult.Message);
+            }
+
+            var filePath = fileResult.Data;
+
+            // =========================================================
+            // Create Entity
+            // =========================================================
 
             var document = new EmployeeDocument
             {
                 EmployeeId = employeeId,
 
-                Name = dto.Name,
+                Name = dto.Name?.Trim() ?? string.Empty,
 
-                FileName = dto.File.FileName,
+                FileName =
+                    Path.GetFileName(dto.File.FileName),
 
-                StoredFileName = Path.GetFileName(filePath),
+                StoredFileName =
+                    Path.GetFileName(filePath),
 
                 FilePath = filePath,
 
-                ContentType = dto.File.ContentType,
+                ContentType =
+                    dto.File.ContentType.Trim(),
 
                 FileSize = dto.File.Length,
 
@@ -61,99 +157,353 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
 
                 ExpiryDate = dto.ExpiryDate,
 
-                Notes = dto.Notes
+                Notes = dto.Notes?.Trim()
             };
 
+            // =========================================================
+            // Save Database
+            // =========================================================
 
-            _context.EmployeeDocuments.Add(document);
-
-            await _context.SaveChangesAsync(cancellationToken);
-
-
-            return Result<EmployeeDocumentDto>.Succeeded(
-                MapToDto(document));
-        }
-
-
-        public async Task<Result<EmployeeDocumentDto>> UpdateAsync(
-       int id,
-       UpdateEmployeeDocumentDto dto,
-       CancellationToken cancellationToken = default)
-        {
-            var document = await _context.EmployeeDocuments
-                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-
-            if (document == null)
-                return Result<EmployeeDocumentDto>.Failure(
-                    "Employee document not found");
-
-
-            if (dto.File != null)
+            try
             {
+                _context.EmployeeDocuments.Add(document);
+
+                await _context.SaveChangesAsync(
+                    cancellationToken);
+            }
+            catch
+            {
+                // DB failed after physical file was saved.
+                // Remove the newly created physical file.
                 await _fileStorage.DeleteFileAsync(
-                    document.FilePath,
-                    cancellationToken);
+                    filePath,
+                    CancellationToken.None);
 
-
-                var filePath = await _fileStorage.SaveFileAsync(
-                    dto.File,
-                    "Employees/Documents",
-                    cancellationToken);
-
-
-                document.FilePath = filePath;
-                document.StoredFileName = Path.GetFileName(filePath);
-                document.FileName = dto.File.FileName;
-                document.ContentType = dto.File.ContentType;
-                document.FileSize = dto.File.Length;
+                return Result<EmployeeDocumentDto>.Failure(
+                    "Unable to save employee document.");
             }
 
+            // =========================================================
+            // Audit
+            // =========================================================
 
-            if (!string.IsNullOrWhiteSpace(dto.Name))
-                document.Name = dto.Name;
+            await _auditService.LogAsync(
+                AuditActions.Create,
+                nameof(EmployeeDocument),
+                document.Id.ToString(),
+                null,
+                new
+                {
+                    document.EmployeeId,
+                    document.Name,
+                    document.FileName,
+                    document.FileSize,
+                    document.ContentType,
+                    document.IssueDate,
+                    document.ExpiryDate
+                });
 
-
-            if (dto.IssueDate.HasValue)
-                document.IssueDate = dto.IssueDate;
-
-
-            if (dto.ExpiryDate.HasValue)
-                document.ExpiryDate = dto.ExpiryDate;
-
-
-            if (dto.Notes != null)
-                document.Notes = dto.Notes;
-
-
-            await _context.SaveChangesAsync(cancellationToken);
-
+            // =========================================================
+            // Return Result
+            // =========================================================
 
             return Result<EmployeeDocumentDto>.Succeeded(
-                MapToDto(document));
+                MapToDto(document),
+                "Employee document created successfully.");
         }
+
+        public async Task<Result<EmployeeDocumentDto>> UpdateAsync(
+        int id,
+        UpdateEmployeeDocumentDto dto,
+        CancellationToken cancellationToken = default)
+        {
+            // =========================================================
+            // Validate Request
+            // =========================================================
+
+            if (id <= 0)
+            {
+                return Result<EmployeeDocumentDto>.Failure(
+                    "Invalid employee document ID.");
+            }
+
+            if (dto is null)
+            {
+                return Result<EmployeeDocumentDto>.Failure(
+                    "Request is required.");
+            }
+
+            // =========================================================
+            // Get Document
+            // =========================================================
+
+            var document =
+                await _context.EmployeeDocuments
+                    .FirstOrDefaultAsync(
+                        x => x.Id == id,
+                        cancellationToken);
+
+            if (document is null)
+            {
+                return Result<EmployeeDocumentDto>.Failure(
+                    "Employee document not found.");
+            }
+
+            // =========================================================
+            // Validate Dates
+            // =========================================================
+
+            var issueDate =
+                dto.IssueDate ?? document.IssueDate;
+
+            var expiryDate =
+                dto.ExpiryDate ?? document.ExpiryDate;
+
+            if (issueDate.HasValue &&
+                expiryDate.HasValue &&
+                expiryDate.Value < issueDate.Value)
+            {
+                return Result<EmployeeDocumentDto>.Failure(
+                    "Expiry date cannot be earlier than issue date.");
+            }
+
+            // =========================================================
+            // Store Old File Path
+            // =========================================================
+
+            var oldFilePath = document.FilePath;
+
+            string? newFilePath = null;
+
+            // =========================================================
+            // Replace File
+            // =========================================================
+
+            if (dto.File is not null)
+            {
+                if (dto.File.Length == 0)
+                {
+                    return Result<EmployeeDocumentDto>.Failure(
+                        "File cannot be empty.");
+                }
+
+                // -----------------------------------------------------
+                // Validate New File
+                // -----------------------------------------------------
+
+                var validationResult =
+             await _fileValidationService.ValidateAsync(
+                 dto.File,
+                 _fileValidationOptions,
+                 cancellationToken);
+
+                if (!validationResult.Success)
+                {
+                    return Result<EmployeeDocumentDto>.Failure(
+                        validationResult.Message);
+                }
+
+                // -----------------------------------------------------
+                // Save New Physical File
+                // -----------------------------------------------------
+
+                var fileResult =
+                    await _fileStorage.SaveFileAsync(
+                        dto.File,
+                        "Employees/Documents",
+                        cancellationToken);
+
+                if (!fileResult.Success ||
+                    string.IsNullOrWhiteSpace(fileResult.Data))
+                {
+                    return Result<EmployeeDocumentDto>.Failure(
+                        fileResult.Message);
+                }
+
+                newFilePath = fileResult.Data;
+
+                // -----------------------------------------------------
+                // Update File Information
+                // -----------------------------------------------------
+
+                document.FilePath = newFilePath;
+
+                document.StoredFileName =
+                    Path.GetFileName(newFilePath);
+
+                document.FileName =
+                    Path.GetFileName(dto.File.FileName);
+
+                document.ContentType =
+                    dto.File.ContentType.Trim();
+
+                document.FileSize =
+                    dto.File.Length;
+            }
+
+            // =========================================================
+            // Update Basic Information
+            // =========================================================
+
+            if (dto.Name is not null)
+            {
+                if (string.IsNullOrWhiteSpace(dto.Name))
+                {
+                    // New file may already have been saved.
+                    // Clean it up before returning.
+                    if (newFilePath is not null)
+                    {
+                        await _fileStorage.DeleteFileAsync(
+                            newFilePath,
+                            CancellationToken.None);
+                    }
+
+                    return Result<EmployeeDocumentDto>.Failure(
+                        "Document name cannot be empty.");
+                }
+
+                document.Name = dto.Name.Trim();
+            }
+
+            if (dto.IssueDate.HasValue)
+            {
+                document.IssueDate =
+                    dto.IssueDate.Value;
+            }
+
+            if (dto.ExpiryDate.HasValue)
+            {
+                document.ExpiryDate =
+                    dto.ExpiryDate.Value;
+            }
+
+            if (dto.Notes is not null)
+            {
+                document.Notes =
+                    dto.Notes.Trim();
+            }
+
+            // =========================================================
+            // Save Database
+            // =========================================================
+
+            try
+            {
+                await _context.SaveChangesAsync(
+                    cancellationToken);
+            }
+            catch
+            {
+                // DB failed.
+                // Delete newly uploaded file.
+                // Keep the old file untouched.
+                if (newFilePath is not null)
+                {
+                    await _fileStorage.DeleteFileAsync(
+                        newFilePath,
+                        CancellationToken.None);
+                }
+
+                return Result<EmployeeDocumentDto>.Failure(
+                    "Unable to update employee document.");
+            }
+
+            // =========================================================
+            // Delete Old Physical File
+            // =========================================================
+
+            if (newFilePath is not null &&
+                !string.IsNullOrWhiteSpace(oldFilePath) &&
+                !string.Equals(
+                    oldFilePath,
+                    newFilePath,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                await _fileStorage.DeleteFileAsync(
+                    oldFilePath,
+                    CancellationToken.None);
+            }
+
+            // =========================================================
+            // Audit
+            // =========================================================
+
+            await _auditService.LogAsync(
+                AuditActions.Update,
+                nameof(EmployeeDocument),
+                document.Id.ToString(),
+                null,
+                new
+                {
+                    document.EmployeeId,
+                    document.Name,
+                    document.FileName,
+                    document.FileSize,
+                    document.ContentType,
+                    document.IssueDate,
+                    document.ExpiryDate
+                });
+
+            // =========================================================
+            // Return Result
+            // =========================================================
+
+            return Result<EmployeeDocumentDto>.Succeeded(
+                MapToDto(document),
+                "Employee document updated successfully.");
+        }
+
 
 
         public async Task<Result> DeleteAsync(int id,
-            CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
         {
-            var document = await _context.EmployeeDocuments
-                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+            // =========================================================
+            // Validate ID
+            // =========================================================
 
-
-            if (document == null)
+            if (id <= 0)
+            {
                 return Result.Failure(
-                    "Employee document not found");
+                    "Invalid employee document ID.");
+            }
 
+            // =========================================================
+            // Get Document
+            // =========================================================
 
-            _context.EmployeeDocuments.Remove(document);
+            var document =
+                await _context.EmployeeDocuments
+                    .FirstOrDefaultAsync(
+                        x => x.Id == id,
+                        cancellationToken);
 
+            if (document is null)
+            {
+                return Result.Failure(
+                    "Employee document not found.");
+            }
 
-            await _context.SaveChangesAsync(cancellationToken);
+            // =========================================================
+            // Soft Delete
+            // =========================================================
 
-            await _fileStorage.DeleteFileAsync( document.FilePath,cancellationToken);
+            document.IsDeleted = true;
+            document.IsActive = false;
 
-            return Result.Succeeded();
+            await _context.SaveChangesAsync(
+                cancellationToken);
+
+            // =========================================================
+            // Delete Physical File
+            // =========================================================
+
+            await _fileStorage.DeleteFileAsync(
+                document.FilePath,
+                cancellationToken);
+
+            return Result.Succeeded(
+                "Employee document deleted successfully.");
         }
 
 

@@ -1,5 +1,5 @@
-﻿using MicroERP.Application.Features.EmployeeLeaves.Interfaces;
-using MicroERP.Domin.Entities;
+﻿using MicroERP.Application.Features.Leaves.EmployeeLeaves.Interfaces;
+using MicroERP.Domin.Entities.EmployeeLeaves;
 using MicroERP.Domin.Enums;
 using Microsoft.EntityFrameworkCore;
 

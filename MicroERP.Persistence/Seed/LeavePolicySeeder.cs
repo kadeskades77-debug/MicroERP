@@ -1,4 +1,4 @@
-﻿using MicroERP.Domin.Entities;
+﻿using MicroERP.Domin.Entities.Policies;
 using MicroERP.Domin.Enums;
 using Microsoft.EntityFrameworkCore;
 

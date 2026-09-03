@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Features\EmployeeEvaluations\Interfaces\IEvaluationPeriodService.cs~RF1a66b29.TMP" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="13.0.1" />
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.28" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.26" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.28" />
@@ -14,18 +20,21 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="QuestPDF" Version="2026.7.3" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Authorization\Groups\" />
     <Folder Include="Authorization\Initialization\" />
-    <Folder Include="Authorization\Services\" />
     <Folder Include="Features\Audit\Validators\" />
-    <Folder Include="Features\Auth\Services\" />
+    <Folder Include="Features\Authorization\Auth\Services\" />
     <Folder Include="Behaviors\" />
     <Folder Include="Exceptions\" />
-    <Folder Include="Responses\" />
+    <Folder Include="Features\NewFolder\Interfaces\" />
+    <Folder Include="Features\NewFolder\DTOs\" />
+    <Folder Include="Features\NewFolder\Validators\" />
+    <Folder Include="Features\NewFolder\Services\" />
   </ItemGroup>
 
   <ItemGroup>

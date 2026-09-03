@@ -1,9 +1,9 @@
-﻿using Domin.Entities;
-using MicroERP.Application.Common.Interfaces;
+﻿using MicroERP.Application.Common.Interfaces;
 using MicroERP.Application.Features.Departments.DTOs;
 using MicroERP.Application.Features.Departments.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using MicroERP.Application.Common.Mappings;
+using MicroERP.Domin.Entities.Employees;
 namespace MicroERP.Persistence.Queries;
 
 public class DepartmentQueries : IDepartmentQueries

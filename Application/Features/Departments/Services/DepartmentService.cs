@@ -1,5 +1,4 @@
-﻿using Domin.Entities;
-using MicroERP.Application.Common.DTOs;
+﻿using MicroERP.Application.Common.DTOs;
 using MicroERP.Application.Common.Exceptions;
 using MicroERP.Application.Common.Interfaces;
 using MicroERP.Application.Common.Mappings;
@@ -9,6 +8,7 @@ using MicroERP.Application.Features.Departments.DTOs;
 using MicroERP.Application.Features.Departments.Interfaces;
 using MicroERP.Application.Features.Employees.Interfaces;
 using MicroERP.Domain.Audit;
+using MicroERP.Domin.Entities.Employees;
 using Microsoft.EntityFrameworkCore;
 namespace MicroERP.Application.Features.Departments.Services
 {
@@ -44,20 +44,21 @@ namespace MicroERP.Application.Features.Departments.Services
             };
 
             _context.Departments.Add(department);
-            await _auditService.LogAsync(
-                AuditActions.Create,
-                nameof(Department),
-                department.Id.ToString(),
-                null,
-                new
-                {
-                    department.Code,
-                    department.NameAr,
-                    department.NameEn,
-                    department.ManagerEmployeeId
-                });
+         
              await _context.SaveChangesAsync();
 
+            await _auditService.LogAsync(
+             AuditActions.Create,
+             nameof(Department),
+             department.Id.ToString(),
+             null,
+             new
+             {
+                 department.Code,
+                 department.NameAr,
+                 department.NameEn,
+                 department.ManagerEmployeeId
+             });
             return department.ToDto();
         }
         public async Task<Result<List<DepartmentListDto>>> GetAllAsync()
@@ -66,7 +67,7 @@ namespace MicroERP.Application.Features.Departments.Services
 
             return Result<List<DepartmentListDto>>.Succeeded(data);
         }
-        public async Task<DepartmentDto> GetByIdAsync(int id)
+        public async Task<DepartmentDto?> GetByIdAsync(int id)
         {
             var department = await _departmentQueries.GetByIdAsync(id);
 
@@ -108,6 +109,7 @@ namespace MicroERP.Application.Features.Departments.Services
                     ? null
                     : dto.NameEn.Trim();
             }
+            await _context.SaveChangesAsync();
 
             await _auditService.LogAsync(
                 AuditActions.Update,
@@ -122,7 +124,7 @@ namespace MicroERP.Application.Features.Departments.Services
                     department.ManagerEmployeeId
                 });
 
-            await _context.SaveChangesAsync();
+         
 
             return department.ToDto();
         }
@@ -147,11 +149,13 @@ namespace MicroERP.Application.Features.Departments.Services
             }
             var oldValues = new
             {
-                department.ManagerEmployeeId
+                department.ManagerEmployeeId,
+                department.HasManager
             };
 
             department.ManagerEmployeeId = dto.ManagerEmployeeId;
-
+            department.HasManager = true;
+            await _context.SaveChangesAsync();
             await _auditService.LogAsync(
                   AuditActions.AssignManager,
                   nameof(Department),
@@ -159,9 +163,10 @@ namespace MicroERP.Application.Features.Departments.Services
                   oldValues,
                   new
                   {
-                      department.ManagerEmployeeId
+                      department.ManagerEmployeeId,
+                      department.HasManager
                   });
-            await _context.SaveChangesAsync();
+           
 
             return department.ToDto();
         }
@@ -205,7 +210,7 @@ namespace MicroERP.Application.Features.Departments.Services
 
                 // تعيينه مديراً للقسم الجديد
                 newDepartment.ManagerEmployeeId = employee.Id;
-
+                await _context.SaveChangesAsync();
                 await _auditService.LogAsync(
                     AuditActions.Update,
                     nameof(Department),
@@ -247,7 +252,7 @@ namespace MicroERP.Application.Features.Departments.Services
             };
             department.IsDeleted = true;
             department.IsActive = false;
-
+            await _context.SaveChangesAsync();
             await _auditService.LogAsync(
                 AuditActions.Delete,
                 nameof(Department),

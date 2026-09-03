@@ -2,7 +2,7 @@
 
 public interface IPermissionDefinitionProvider
 {
-    PermissionGroupDefinition Group { get; }
+     PermissionGroupDefinition Group { get; }
 
     IEnumerable<PermissionDefinition> GetPermissions();
 }

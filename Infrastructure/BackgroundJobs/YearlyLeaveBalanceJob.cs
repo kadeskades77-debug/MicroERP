@@ -1,4 +1,4 @@
-﻿using MicroERP.Application.Features.EmployeeLeaveBalances.Interfaces;
+﻿using MicroERP.Application.Features.Leaves.EmployeeLeaveBalances.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 

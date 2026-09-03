@@ -1,8 +1,8 @@
 ﻿using MicroERP.Application.Common.Interfaces;
-using MicroERP.Application.Features.EmployeeSpecialLeaves.DTOs;
-using MicroERP.Application.Features.EmployeeSpecialLeaves.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using MicroERP.Application.Common.Mappings;
+using MicroERP.Application.Features.Leaves.EmployeeSpecialLeaves.DTOs;
+using MicroERP.Application.Features.Leaves.EmployeeSpecialLeaves.Interfaces;
 namespace MicroERP.Persistence.Queries;
 public class EmployeeSpecialLeaveQueries : IEmployeeSpecialLeaveQueries
 {

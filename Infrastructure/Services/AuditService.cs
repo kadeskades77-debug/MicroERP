@@ -139,36 +139,53 @@ public class AuditService : IAuditService
 
     //================ LOG =================
 
-    public Task LogAsync(
-     string action,
-     string entityName,
-     string? entityId = null,
-     object? oldValues = null,
-     object? newValues = null)
+  
+public async Task LogAsync(
+    string action,
+    string entityName,
+    string? entityId = null,
+    object? oldValues = null,
+    object? newValues = null,
+    CancellationToken cancellationToken = default)
     {
+        // =========================================================
+        // Get HTTP Context
+        // =========================================================
+
         var httpContext =
             _httpContextAccessor.HttpContext;
 
 
+        // =========================================================
+        // Create Audit Log
+        // =========================================================
+
         var audit = new AuditLog
         {
-            UserId = _currentUser.UserId,
+            UserId =
+                _currentUser.UserId,
 
-            UserName = _currentUser.UserName,
+            UserName =
+                _currentUser.UserName,
 
-            Action = action,
+            Action =
+                action,
 
-            EntityName = entityName,
+            EntityName =
+                entityName,
 
-            EntityId = entityId,
+            EntityId =
+                entityId,
 
-            OldValues = oldValues is null
-                ? null
-                : JsonSerializer.Serialize(oldValues),
+            OldValues =
+                oldValues is null
+                    ? null
+                    : JsonSerializer.Serialize(oldValues),
 
-            NewValues = newValues is null
-                ? null
-                : JsonSerializer.Serialize(newValues),
+            NewValues =
+                newValues is null
+                    ? null
+                    : JsonSerializer.Serialize(newValues),
 
             IpAddress =
                 httpContext?
@@ -184,8 +201,22 @@ public class AuditService : IAuditService
         };
 
 
-        _context.AuditLogs.Add(audit);
+        // =========================================================
+        // Add Audit
+        // =========================================================
 
-        return Task.CompletedTask;
+        await _context.AuditLogs.AddAsync(
+            audit,
+            cancellationToken);
+
+
+        // =========================================================
+        // Save Audit
+        // =========================================================
+
+        await _context.SaveChangesAsync(
+            cancellationToken);
     }
+
+
 }
