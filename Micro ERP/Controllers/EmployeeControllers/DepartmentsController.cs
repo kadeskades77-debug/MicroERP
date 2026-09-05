@@ -5,7 +5,7 @@ using MicroERP.Application.Features.Departments.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MicroERP.Controllers
+namespace Micro_ERP.Controllers.EmployeeControllers
 {
     [ApiController]
     [Route("api/[controller]")]

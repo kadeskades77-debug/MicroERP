@@ -55,6 +55,7 @@ namespace MicroERP.Application.Common.Interfaces
         DbSet<PayrollPolicy> PayrollPolicys { get; }
         DbSet<OvertimePolicy> OvertimePolicies { get; }
         DbSet<EmployeeBankAccount> EmployeeBankAccounts { get; }
+        DbSet<Position> Positions { get; }
         DbSet<EmployeeLoan> EmployeeLoans { get; }
         DbSet<EmployeeLoanInstallment> EmployeeLoanInstallments { get; }
          DbSet<EvaluationPeriod> EvaluationPeriods { get; }

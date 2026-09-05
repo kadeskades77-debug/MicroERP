@@ -19,14 +19,19 @@ public static class EmployeeMappings
             Salary = employee.Salary,
 
             DepartmentCode = employee.Department.Code,
-            DepartmentName = employee.Department.NameAr,
+            DepartmentName = employee.Department.NameEn,
+
+            PositionId = employee.PositionId,
+            PositionCode = employee.Position?.Code,
+            PositionName = employee.Position?.NameEn,
 
             IsActive = employee.IsActive
         };
     }
 
 
-    public static EmployeeListDto ToListDto(this Employee employee)
+    public static EmployeeListDto ToListDto(
+        this Employee employee)
     {
         return new EmployeeListDto
         {
@@ -41,6 +46,10 @@ public static class EmployeeMappings
 
             DepartmentCode = employee.Department.Code,
             DepartmentName = employee.Department.NameAr,
+
+            PositionId = employee.PositionId,
+            PositionCode = employee.Position?.Code,
+            PositionName = employee.Position?.NameAr,
 
             IsActive = employee.IsActive
         };

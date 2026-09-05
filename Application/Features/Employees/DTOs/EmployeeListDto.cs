@@ -16,6 +16,11 @@ namespace MicroERP.Application.Features.Employees.DTOs
         public string Phone { get; set; } = null!;
          
         public decimal Salary { get; set; }
+        public int? PositionId { get; set; }
+
+        public string? PositionCode { get; set; }
+
+        public string? PositionName { get; set; }
 
         public string DepartmentCode { get; set; } = null!;
 

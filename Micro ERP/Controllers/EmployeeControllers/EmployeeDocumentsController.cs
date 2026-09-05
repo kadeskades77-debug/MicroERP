@@ -5,7 +5,7 @@ using MicroERP.Application.Features.Documents.EmployeeDocuments.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Micro_ERP.Controllers;
+namespace Micro_ERP.Controllers.EmployeeControllers;
 
 [Route("api/employees/{employeeId}/documents")]
 [ApiController]

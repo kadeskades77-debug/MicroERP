@@ -47,6 +47,9 @@ using MicroERP.Application.Features.Payrolls.SalaryComponents.Interfaces;
 using MicroERP.Application.Features.Payrolls.SalaryComponents.Services;
 using MicroERP.Application.Features.Payrolls.Services;
 using MicroERP.Application.Features.Payrolls.Services.Calculators;
+using MicroERP.Application.Features.Positions.Interfaces;
+using MicroERP.Application.Features.Positions.Queries;
+using MicroERP.Application.Features.Positions.Services;
 using MicroERP.Application.Features.Ticketing.Interfaces;
 using MicroERP.Application.Features.Ticketing.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -71,6 +74,8 @@ public static class DependencyInjection
 
         services.AddScoped<IDepartmentService, DepartmentService>();
         services.AddScoped<IEmployeeService, EmployeeService>();
+        services.AddScoped<IPositionService, PositionService>();
+        services.AddScoped<IPositionQueries, PositionQueries>();
         services.AddScoped<IEmployeeDocumentService,EmployeeDocumentService>();
         services.AddScoped<IEmployeeDocumentService, EmployeeDocumentService>();
         services.AddScoped<IFileValidationService,FileValidationService>();

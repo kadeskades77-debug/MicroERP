@@ -20,10 +20,11 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
         private readonly IApplicationDbContext _context;
         private readonly IAuditService _auditService;
         private readonly FileValidationOptions _fileValidationOptions;
+        
 
 
         public EmployeeDocumentService(
-            IApplicationDbContext context, IFileStorageService fileStorage, IFileValidationService fileValidationService, 
+            IApplicationDbContext context, IFileStorageService fileStorage, IFileValidationService fileValidationService,
             IAuditService auditService,
             IOptions<FileValidationSettings> fileValidationOptions)
 
@@ -33,6 +34,7 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
             _fileValidationService = fileValidationService;
             _auditService = auditService;
             _fileValidationOptions = fileValidationOptions.Value.EmployeeDocuments;
+     
         }
 
 
@@ -504,6 +506,54 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
 
             return Result.Succeeded(
                 "Employee document deleted successfully.");
+        }
+
+        public async Task<Result> DeleteByEmployeeAsync(int employeeId,
+        CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (employeeId <= 0)
+                {
+                    return Result.Failure(
+                        "Invalid employee ID.");
+                }
+
+                var documents =
+                    await _context.EmployeeDocuments
+                        .Where(x => x.EmployeeId == employeeId)
+                        .ToListAsync(cancellationToken);
+
+                if (!documents.Any())
+                {
+                    return Result.Succeeded(
+                        "No employee documents found.");
+                }
+
+                foreach (var document in documents)
+                {
+                    document.IsDeleted = true;
+                    document.IsActive = false;
+                }
+
+                await _context.SaveChangesAsync(
+                    cancellationToken);
+
+                foreach (var document in documents)
+                {
+                    await _fileStorage.DeleteFileAsync(
+                        document.FilePath,
+                        cancellationToken);
+                }
+
+                return Result.Succeeded(
+                    "Employee documents deleted successfully.");
+            }
+            catch (Exception)
+            {
+                return Result.Failure(
+                    "An unexpected error occurred.");
+            }
         }
 
 

@@ -21,4 +21,8 @@ public interface IEmployeeDocumentService
     Task<Result> DeleteAsync(
         int id,
         CancellationToken cancellationToken = default);
+
+    Task<Result> DeleteByEmployeeAsync(
+    int employeeId,
+    CancellationToken cancellationToken = default);
 }

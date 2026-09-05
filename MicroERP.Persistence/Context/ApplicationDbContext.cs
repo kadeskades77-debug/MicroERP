@@ -160,6 +160,7 @@ public class ApplicationDbContext
     public DbSet<PayrollPolicy> PayrollPolicys { get; set; }
     public DbSet<OvertimePolicy> OvertimePolicies { get; set; }
     public DbSet<EmployeeBankAccount> EmployeeBankAccounts { get; set; }
+    public DbSet<Position> Positions { get; set; }
 
     public DbSet<EmployeeLoan> EmployeeLoans { get; set; } = null!;
     public DbSet<EvaluationPeriod> EvaluationPeriods =>

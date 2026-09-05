@@ -19,6 +19,12 @@ namespace MicroERP.Application.Features.Employees.DTOs
 
         public string DepartmentName { get; set; } = null!;
 
+        public int? PositionId { get; set; }
+
+        public string? PositionCode { get; set; }
+
+        public string? PositionName { get; set; }
+
         public bool IsActive { get; set; }
     }
 }

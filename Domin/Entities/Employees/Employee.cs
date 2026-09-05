@@ -23,6 +23,8 @@ namespace MicroERP.Domin.Entities.Employees
         public WorkSchedule? WorkSchedule { get; set; }
 
         public ICollection<EmployeeDocument> Documents { get; set; } = new List<EmployeeDocument>();
+        public int? PositionId { get; set; }
+        public Position? Position { get; set; }
         public ICollection<EmployeeLeave> EmployeeLeaves { get; set; } = [];
         public ICollection<EmployeeLeaveBalance> LeaveBalances { get; set; } = [];
         public ICollection<AttendanceRecord> AttendanceRecords { get; set; }= new List<AttendanceRecord>();
