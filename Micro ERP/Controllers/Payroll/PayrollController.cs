@@ -93,7 +93,7 @@ public class PayrollController : ControllerBase
 
     [HttpPost("{payrollPeriodId:int}/approvePeriod")]
     [Authorize(
-        Policy = HRPermissions.Payroll.Approve)]
+        Policy = HRPermissions.PayrollApproval.Approve)]
     public async Task<IActionResult> ApprovePeriod(int payrollPeriodId,
         CancellationToken cancellationToken)
     {
@@ -122,7 +122,7 @@ public class PayrollController : ControllerBase
 
     [HttpPost("{id:int}/approve")]
     [Authorize(
-        Policy = HRPermissions.Payroll.Approve)]
+        Policy = HRPermissions.PayrollApproval.Approve)]
     public async Task<IActionResult> Approve(int id,
         CancellationToken cancellationToken)
     {
@@ -151,7 +151,7 @@ public class PayrollController : ControllerBase
 
     [HttpPost("{payrollPeriodId:int}/payPeriod")]
     [Authorize(
-        Policy = HRPermissions.Payroll.Pay)]
+        Policy = HRPermissions.PayrollPayment.Pay)]
     public async Task<IActionResult> PayPeriod(int payrollPeriodId,
         CancellationToken cancellationToken)
     {
@@ -179,7 +179,7 @@ public class PayrollController : ControllerBase
 
     [HttpPost("{id:int}/pay")]
     [Authorize(
-        Policy = HRPermissions.Payroll.Pay)]
+        Policy = HRPermissions.PayrollPayment.Pay)]
     public async Task<IActionResult> Pay(int id,
         CancellationToken cancellationToken)
     {
@@ -206,7 +206,7 @@ public class PayrollController : ControllerBase
 
 
     [HttpPost("{periodId:int}/close")]
-    [Authorize(Policy = HRPermissions.Payroll.Approve)]
+    [Authorize(Policy = HRPermissions.Payroll.Update)]
     public async Task<IActionResult> Close(int periodId,
     CancellationToken cancellationToken)
     {

@@ -1,7 +1,6 @@
 ﻿using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.Payrolls.Adjustments.DTOs;
 using MicroERP.Application.Features.Payrolls.Adjustments.Interfaces;
-using MicroERP.Domin.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

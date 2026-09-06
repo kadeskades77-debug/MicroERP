@@ -9,7 +9,7 @@ namespace MicroERP.Application.Features.Departments.DTOs
 
         public string NameAr { get; set; } = null!;
 
-        public string? NameEn { get; set; }
+        public string NameEn { get; set; } = null!;
 
         public int? ManagerEmployeeId { get; set; }
 

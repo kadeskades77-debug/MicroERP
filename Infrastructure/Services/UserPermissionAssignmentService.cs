@@ -34,96 +34,163 @@ public class UserPermissionAssignmentService
 
 
 
-    public async Task<Result<List<string>>> GetUserPermissionGroupsAsync(string userId)
+    public async Task<Result<List<string>>> GetUserPermissionGroupsAsync(
+    string userId,
+    CancellationToken cancellationToken = default)
     {
         var exists = await _userManager.Users
-            .AnyAsync(x => x.Id == userId);
+            .AnyAsync(
+                x => x.Id == userId,
+                cancellationToken);
 
         if (!exists)
+        {
             return Result<List<string>>
                 .Failure("User not found.");
-
+        }
 
         var groups = await _context.UserPermissionAssignments
             .Where(x => x.UserId == userId)
             .Select(x => x.PermissionGroup.Key)
-            .ToListAsync();
-
+            .ToListAsync(cancellationToken);
 
         return Result<List<string>>
             .Succeeded(groups);
     }
-    public async Task<Result> AddPermissionGroupAsync(string userId,string permissionGroupKey)
+    public async Task<Result> AddPermissionGroupsAsync(
+    AddUserPermissionGroupsDto dto,
+    CancellationToken cancellationToken = default)
+{
+    return await ExecuteInTransaction(async () =>
     {
-        return await ExecuteInTransaction(async () =>
+        // =========================================================
+        // Validate User
+        // =========================================================
+
+        var userExists = await _userManager.Users
+            .AnyAsync(
+                x => x.Id == dto.UserId,
+                cancellationToken);
+
+        if (!userExists)
+            return Result.Failure("User not found.");
+
+        // =========================================================
+        // Normalize Permission Group Keys
+        // =========================================================
+
+        var keys = dto.PermissionGroupKeys
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (keys.Count == 0)
+            return Result.Failure(
+                "At least one permission group is required.");
+
+        // =========================================================
+        // Get Permission Groups
+        // =========================================================
+
+        var groups = await _context.PermissionGroups
+            .Where(x => keys.Contains(x.Key))
+            .ToListAsync(cancellationToken);
+
+        if (groups.Count != keys.Count)
+            return Result.Failure(
+                "One or more permission groups are invalid.");
+
+        // =========================================================
+        // Check Existing Assignments
+        // =========================================================
+
+        var groupIds = groups
+            .Select(x => x.Id)
+            .ToList();
+
+        var existingGroupIds = await _context
+            .UserPermissionAssignments
+            .Where(x =>
+                x.UserId == dto.UserId &&
+                groupIds.Contains(x.PermissionGroupId))
+            .Select(x => x.PermissionGroupId)
+            .ToListAsync(cancellationToken);
+
+        if (existingGroupIds.Count > 0)
         {
-            var userExists = await _userManager.Users
-                .AnyAsync(x => x.Id == userId);
+            var existingGroups = groups
+                .Where(x => existingGroupIds.Contains(x.Id))
+                .Select(x => x.Key)
+                .ToList();
 
-            if (!userExists)
-                return Result.Failure("User not found.");
+            return Result.Failure(
+                $"Permission groups already assigned: " +
+                $"{string.Join(", ", existingGroups)}.");
+        }
 
+        // =========================================================
+        // Add Assignments
+        // =========================================================
 
-            var group = await _context.PermissionGroups
-                .FirstOrDefaultAsync(x =>
-                    x.Key == permissionGroupKey);
-
-
-            if (group is null)
-                return Result.Failure(
-                    "Permission group not found.");
-
-
-
-            var exists = await _context.UserPermissionAssignments
-                .AnyAsync(x =>
-                    x.UserId == userId &&
-                    x.PermissionGroupId == group.Id);
-
-
-            if (exists)
-                return Result.Failure(
-                    "Permission group already assigned.");
-
-
-
-            _context.UserPermissionAssignments.Add(
+        _context.UserPermissionAssignments.AddRange(
+            groups.Select(x =>
                 new UserPermissionAssignment
                 {
-                    UserId = userId,
-                    PermissionGroupId = group.Id
-                });
-          //  await _context.SaveChangesAsync();
-          
+                    UserId = dto.UserId,
+                    PermissionGroupId = x.Id
+                }));
 
-            await _authorizationManager
-                .ClearUserPermissionsCacheAsync(userId);
+        // =========================================================
+        // Audit
+        // =========================================================
 
-           //   await _auditService.LogAsync(
-           //AuditActions.AssignPermissionGroup,
-           //nameof(ApplicationUser),
-           //userId,
-           //null,
-           //new
-           //{
-           //    PermissionGroup = permissionGroupKey
-           //});
+        await _auditService.LogAsync(
+            AuditActions.AssignPermissionGroup,
+            nameof(ApplicationUser),
+            dto.UserId,
+            null,
+            new
+            {
+                PermissionGroups = groups
+                    .Select(x => x.Key)
+                    .ToList()
+            },
+            cancellationToken);
 
-            return Result.Succeeded(
-                "Permission group added successfully.");
-        });
-    }
-    public async Task<Result> ReplacePermissionGroupsAsync(UpdateUserPermissionGroupsDto dto)
+        // =========================================================
+        // Clear Authorization Cache
+        // =========================================================
+
+        await _authorizationManager
+            .ClearUserPermissionsCacheAsync(dto.UserId);
+
+        return Result.Succeeded(
+            "Permission groups added successfully.");
+
+    }, cancellationToken);
+}   
+    public async Task<Result> ReplacePermissionGroupsAsync(
+    UpdateUserPermissionGroupsDto dto,
+    CancellationToken cancellationToken = default)
     {
         return await ExecuteInTransaction(async () =>
         {
-            var userExists = await _userManager.Users
-                .AnyAsync(x => x.Id == dto.UserId);
+            // =========================================================
+            // Validate User
+            // =========================================================
 
+            var userExists = await _userManager.Users
+                .AnyAsync(
+                    x => x.Id == dto.UserId,
+                    cancellationToken);
 
             if (!userExists)
                 return Result.Failure("User not found.");
 
+            // =========================================================
+            // Normalize Permission Group Keys
+            // =========================================================
 
             var keys = dto.PermissionGroupKeys
                 .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -131,27 +198,53 @@ public class UserPermissionAssignmentService
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
+            // =========================================================
+            // Employee Permission Group is mandatory
+            // =========================================================
 
+            if (!keys.Any(x =>
+                x.Equals(
+                    "Employee",
+                    StringComparison.OrdinalIgnoreCase)))
+            {
+                return Result.Failure(
+                    "Employee permission group is required.");
+            }
+
+            // =========================================================
+            // Validate Permission Groups
+            // =========================================================
 
             var groups = await _context.PermissionGroups
                 .Where(x => keys.Contains(x.Key))
-                .ToListAsync();
-
+                .ToListAsync(cancellationToken);
 
             if (groups.Count != keys.Count)
+            {
                 return Result.Failure(
                     "One or more permission groups are invalid.");
+            }
 
+            // =========================================================
+            // Get old permission groups before deleting them
+            // =========================================================
 
+            var oldGroups = await _context.UserPermissionAssignments
+                .Where(x => x.UserId == dto.UserId)
+                .Select(x => x.PermissionGroup.Key)
+                .ToListAsync(cancellationToken);
+
+            // =========================================================
+            // Remove old assignments
+            // =========================================================
 
             await _context.UserPermissionAssignments
                 .Where(x => x.UserId == dto.UserId)
-                .ExecuteDeleteAsync();
+                .ExecuteDeleteAsync(cancellationToken);
 
-            var oldGroups = await _context.UserPermissionAssignments
-           .Where(x => x.UserId == dto.UserId)
-           .Select(x => x.PermissionGroup.Key)
-           .ToListAsync();
+            // =========================================================
+            // Add new assignments
+            // =========================================================
 
             _context.UserPermissionAssignments.AddRange(
                 groups.Select(x =>
@@ -160,31 +253,48 @@ public class UserPermissionAssignmentService
                         UserId = dto.UserId,
                         PermissionGroupId = x.Id
                     }));
-            var permissionGroupKeys = await _context.UserPermissionAssignments
-         .Where(x => x.UserId == dto.UserId)
-         .Select(x => x.PermissionGroup.Key)
-         .ToListAsync();
-            await _auditService.LogAsync(
-               AuditActions.ReplacePermissionGroup,
-               nameof(ApplicationUser),
-               dto.UserId,
-               new
-               {
-                   PermissionGroups = oldGroups
-               },
-               new
-               {
-                   PermissionGroups = permissionGroupKeys
-               });
-            await _authorizationManager
-                .ClearUserPermissionsCacheAsync(dto.UserId);
 
+            // =========================================================
+            // New groups for audit
+            // =========================================================
+
+            var newGroups = groups
+                .Select(x => x.Key)
+                .ToList();
+
+            // =========================================================
+            // Audit
+            // =========================================================
+
+            await _auditService.LogAsync(
+                AuditActions.ReplacePermissionGroup,
+                nameof(ApplicationUser),
+                dto.UserId,
+                new
+                {
+                    PermissionGroups = oldGroups
+                },
+                new
+                {
+                    PermissionGroups = newGroups
+                },
+                cancellationToken);
+
+            // =========================================================
+            // Clear authorization cache
+            // =========================================================
+
+            await _authorizationManager
+                .ClearUserPermissionsCacheAsync(
+                    dto.UserId);
 
             return Result.Succeeded(
                 "User permission groups updated successfully.");
-        });
+        }, cancellationToken);
     }
-    public async Task<Result> RemovePermissionGroupFromUserAsync(RemoveUserPermissionGroupDto dto)
+    public async Task<Result> RemovePermissionGroupFromUserAsync(
+    RemoveUserPermissionGroupDto dto,
+    CancellationToken cancellationToken = default)
     {
         return await ExecuteInTransaction(async () =>
         {
@@ -192,17 +302,25 @@ public class UserPermissionAssignmentService
 
             var assignment = await _context.UserPermissionAssignments
                 .Include(x => x.PermissionGroup)
-                .FirstOrDefaultAsync(x =>
-                    x.UserId == dto.UserId &&
-                    x.PermissionGroup.Key == key);
+                .FirstOrDefaultAsync(
+                    x =>
+                        x.UserId == dto.UserId &&
+                        x.PermissionGroup.Key == key,
+                    cancellationToken);
 
             if (assignment is null)
+            {
                 return Result.Failure(
                     "Permission group is not assigned to this user.");
+            }
 
-            if (assignment.PermissionGroup.Key == "Employee")
+            if (assignment.PermissionGroup.Key.Equals(
+                    "Employee",
+                    StringComparison.OrdinalIgnoreCase))
+            {
                 return Result.Failure(
                     "Employee permission group cannot be removed from users.");
+            }
 
             var oldValues = new
             {
@@ -217,46 +335,50 @@ public class UserPermissionAssignmentService
                 nameof(UserPermissionAssignment),
                 $"{assignment.UserId}-{assignment.PermissionGroup.Key}",
                 oldValues,
-                null);
+                null,
+                cancellationToken);
 
             await _authorizationManager
                 .ClearUserPermissionsCacheAsync(dto.UserId);
 
             return Result.Succeeded(
                 "Permission group removed successfully.");
-        });
+
+        }, cancellationToken);
     }
-    private async Task<Result> ExecuteInTransaction(Func<Task<Result>> action)
+
+    private async Task<Result> ExecuteInTransaction(
+    Func<Task<Result>> action,
+    CancellationToken cancellationToken = default)
     {
         var strategy = _context.Database
             .CreateExecutionStrategy();
 
-
         return await strategy.ExecuteAsync(async () =>
         {
             await using var transaction =
-                await _context.Database.BeginTransactionAsync();
-
+                await _context.Database
+                    .BeginTransactionAsync(cancellationToken);
 
             try
             {
                 var result = await action();
 
-
                 if (!result.Success)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
                     return result;
+                }
 
+                await _context.SaveChangesAsync(cancellationToken);
 
-                await _context.SaveChangesAsync();
-
-                await transaction.CommitAsync();
-
+                await transaction.CommitAsync(cancellationToken);
 
                 return result;
             }
             catch
             {
-                await transaction.RollbackAsync();
+                await transaction.RollbackAsync(cancellationToken);
                 throw;
             }
         });

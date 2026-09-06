@@ -1,10 +1,9 @@
 ﻿using MicroERP.Application.Authorization.Permissions;
 using MicroERP.Application.Features.Authorization.UserPermissions.DTOs;
 using MicroERP.Application.Features.Authorization.UserPermissions.Interfaces;
-using MicroERP.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
+
 
 namespace Micro_ERP.Controllers.Auth;
 
@@ -26,39 +25,49 @@ public class UserPermissionController : BaseApiController
 
     [HttpGet("{userId}")]
     [Authorize(Policy = RolePermissionPermissions.UserPermissionGroup.View)]
-    public async Task<IActionResult> Get(string userId)
+    public async Task<IActionResult> Get(
+      string userId,
+      CancellationToken cancellationToken)
     {
         return HandleResult(
-            await _service.GetUserPermissionGroupsAsync(userId));
+            await _service.GetUserPermissionGroupsAsync(
+                userId,
+                cancellationToken));
     }
-
 
 
     [HttpPut]
     [Authorize(Policy = RolePermissionPermissions.UserPermissionGroup.Replace)]
     public async Task<IActionResult> Replace(
-        UpdateUserPermissionGroupsDto dto)
+        UpdateUserPermissionGroupsDto dto,
+        CancellationToken cancellationToken)
     {
         return HandleResult(
-            await _service.ReplacePermissionGroupsAsync(dto));
+            await _service.ReplacePermissionGroupsAsync(
+                dto,
+                cancellationToken));
     }
 
-    [HttpPost("{userId}/groups/{key}")]
+
+    [HttpPost]
     [Authorize(Policy = RolePermissionPermissions.UserPermissionGroup.AssignUsers)]
-    public async Task<IActionResult> AssignUsers(string userId,string key)
+    public async Task<IActionResult> Add(
+        AddUserPermissionGroupsDto dto,
+        CancellationToken cancellationToken)
     {
         return HandleResult(
-            await _service.AddPermissionGroupAsync(userId,
-                key));
+            await _service.AddPermissionGroupsAsync(
+                dto,
+                cancellationToken));
     }
-
 
 
     [HttpDelete("{userId}/groups/{key}")]
     [Authorize(Policy = RolePermissionPermissions.UserPermissionGroup.Delete)]
     public async Task<IActionResult> RemovePermissionGroup(
-    string userId,
-    string key)
+        string userId,
+        string key,
+        CancellationToken cancellationToken)
     {
         var result = await _service
             .RemovePermissionGroupFromUserAsync(
@@ -66,11 +75,9 @@ public class UserPermissionController : BaseApiController
                 {
                     UserId = userId,
                     PermissionGroupKey = key
-                });
+                },
+                cancellationToken);
 
-        if (!result.Success)
-            return BadRequest(result);
-
-        return Ok(result);
+        return HandleResult(result);
     }
 }

@@ -26,7 +26,7 @@ public class EmployeeLoansController : ControllerBase
     // =========================================================
 
     [HttpGet]
-    [Authorize(Policy = HRPermissions.PayrollLoans.View)]
+    [Authorize(Policy = HRPermissions.PayrollLoan.View)]
     public async Task<IActionResult> GetAll(
         [FromQuery] EmployeeLoanFilterDto filter,
         [FromQuery] PagedRequest request,
@@ -49,7 +49,7 @@ public class EmployeeLoansController : ControllerBase
     // =========================================================
 
     [HttpGet("{id:int}")]
-    [Authorize(Policy = HRPermissions.PayrollLoans.View)]
+    [Authorize(Policy = HRPermissions.PayrollLoan.View)]
     public async Task<IActionResult> GetById(
         int id,
         CancellationToken cancellationToken)
@@ -70,7 +70,7 @@ public class EmployeeLoansController : ControllerBase
     // =========================================================
 
     [HttpPost]
-    [Authorize(Policy = HRPermissions.PayrollLoans.Create)]
+    [Authorize(Policy = HRPermissions.PayrollLoan.Create)]
     public async Task<IActionResult> Create(
         [FromBody] CreateEmployeeLoanDto dto,
         CancellationToken cancellationToken)
@@ -91,7 +91,7 @@ public class EmployeeLoansController : ControllerBase
     // =========================================================
 
     [HttpPut("{id:int}")]
-    [Authorize(Policy = HRPermissions.PayrollLoans.Update)]
+    [Authorize(Policy = HRPermissions.PayrollLoan.Update)]
     public async Task<IActionResult> Update(int id,
         [FromBody] UpdateEmployeeLoanDto dto,
         CancellationToken cancellationToken)
@@ -114,7 +114,7 @@ public class EmployeeLoansController : ControllerBase
     // =========================================================
 
     [HttpPost("{id:int}/suspend")]
-    [Authorize(Policy = HRPermissions.PayrollLoans.Suspend)]
+    [Authorize(Policy = HRPermissions.PayrollLoan.Suspend)]
     public async Task<IActionResult> Suspend(
        int id,
        [FromBody] SuspendEmployeeLoanDto dto,
@@ -149,7 +149,7 @@ public class EmployeeLoansController : ControllerBase
     // =========================================================
 
     [HttpPost("{id:int}/resume")]
-    [Authorize(Policy = HRPermissions.PayrollLoans.Resume)]
+    [Authorize(Policy = HRPermissions.PayrollLoan.Resume)]
     public async Task<IActionResult> Resume(
         int id,
         CancellationToken cancellationToken)
@@ -170,7 +170,7 @@ public class EmployeeLoansController : ControllerBase
     // =========================================================
 
     [HttpPost("{id:int}/cancel")]
-    [Authorize(Policy = HRPermissions.PayrollLoans.Cancel)]
+    [Authorize(Policy = HRPermissions.PayrollLoan.Cancel)]
     public async Task<IActionResult> Cancel(
      int id,
      CancelEmployeeLoanDto dto,

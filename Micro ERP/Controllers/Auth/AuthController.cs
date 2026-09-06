@@ -28,6 +28,8 @@ public class AuthController : BaseApiController
 
         return Ok(result);
     }
+
+
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
@@ -39,6 +41,8 @@ public class AuthController : BaseApiController
 
         return Ok(result);
     }
+
+
     [HttpPut("change-password")]
     [AllowAnonymous]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
@@ -50,6 +54,8 @@ public class AuthController : BaseApiController
 
         return Ok(result);
     }
+
+
     [HttpPut("change-email")]
     [Authorize(Policy = IdentityPermissions.User.ChangeEmail)]
     public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailDto dto)
@@ -61,8 +67,10 @@ public class AuthController : BaseApiController
 
         return Ok(result);
     }
+
+
     [HttpPost("reset-password/{userId}")]
-    [Authorize(Policy = IdentityPermissions.User.ResetPassword)]
+    [Authorize(Policy = IdentityPermissions.UserPassword.Reset)]
     public async Task<IActionResult> ResetPassword(string userId)
     {
         var result = await _authService.ResetPasswordAsync(userId);
@@ -72,8 +80,10 @@ public class AuthController : BaseApiController
 
         return Ok(result);
     }
+
+
     [HttpPut("activate/{userId}")]
-    [Authorize(Policy = IdentityPermissions.User.Activate)]
+    [Authorize(Policy = IdentityPermissions.UserActivation.Activate)]
     public async Task<IActionResult> ActivateUser(string userId)
     {
         var result = await _authService.ActivateUserAsync(userId);
@@ -83,8 +93,10 @@ public class AuthController : BaseApiController
 
         return Ok(result);
     }
+
+
     [HttpPut("deactivate/{userId}")]
-    [Authorize(Policy = IdentityPermissions.User.Deactivate)]
+    [Authorize(Policy = IdentityPermissions.UserActivation.Deactivate)]
     public async Task<IActionResult> DeactivateUser(string userId)
     {
         var result = await _authService.DeactivateUserAsync(userId);
@@ -94,8 +106,10 @@ public class AuthController : BaseApiController
 
         return Ok(result);
     }
+
+
     [HttpPut("lock/{userId}")]
-    [Authorize(Policy = IdentityPermissions.User.Lock)]
+    [Authorize(Policy = IdentityPermissions.UserLock.Lock)]
     public async Task<IActionResult> LockUser(string userId)
     {
         var result = await _authService.LockUserAsync(userId);
@@ -105,8 +119,10 @@ public class AuthController : BaseApiController
 
         return Ok(result);
     }
+
+
     [HttpPut("unlock/{userId}")]
-    [Authorize(Policy = IdentityPermissions.User.Unlock)]
+    [Authorize(Policy = IdentityPermissions.UserLock.Unlock)]
     public async Task<IActionResult> UnlockUser(string userId)
     {
         var result = await _authService.UnlockUserAsync(userId);

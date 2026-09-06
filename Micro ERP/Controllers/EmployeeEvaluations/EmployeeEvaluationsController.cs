@@ -25,7 +25,7 @@ public class EmployeeEvaluationsController : ControllerBase
 
     [HttpPost]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Create)]
+        Policy = HRPermissions.EmployeeEvaluation.Create)]
     public async Task<ActionResult<Result<EmployeeEvaluationDto>>> Create(
         CreateEmployeeEvaluationDto dto,
         CancellationToken ct)
@@ -45,7 +45,7 @@ public class EmployeeEvaluationsController : ControllerBase
 
     [HttpPut("{id:int}")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Update)]
+        Policy = HRPermissions.EmployeeEvaluation.Update)]
     public async Task<ActionResult<Result<EmployeeEvaluationDto>>> Update(
         int id,
         UpdateEmployeeEvaluationDto dto,
@@ -67,7 +67,7 @@ public class EmployeeEvaluationsController : ControllerBase
 
     [HttpPost("{id:int}/submit")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Submit)]
+        Policy = HRPermissions.EmployeeEvaluation.Submit)]
     public async Task<ActionResult<Result<bool>>> Submit(
         int id,
         CancellationToken ct)
@@ -87,7 +87,7 @@ public class EmployeeEvaluationsController : ControllerBase
 
     [HttpPost("{id:int}/approve")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Approve)]
+        Policy = HRPermissions.EmployeeEvaluationApproval.Approve)]
     public async Task<ActionResult<Result<bool>>> Approve(
         int id,
         CancellationToken ct)
@@ -107,7 +107,7 @@ public class EmployeeEvaluationsController : ControllerBase
 
     [HttpPost("{id:int}/reject")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Reject)]
+        Policy = HRPermissions.EmployeeEvaluationApproval.Reject)]
     public async Task<ActionResult<Result<bool>>> Reject(
         int id,
         [FromQuery] string? reason,
@@ -129,7 +129,7 @@ public class EmployeeEvaluationsController : ControllerBase
 
     [HttpDelete("{id:int}")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Delete)]
+        Policy = HRPermissions.EmployeeEvaluation .Delete)]
     public async Task<ActionResult<Result<bool>>> Delete(
         int id,
         CancellationToken ct)

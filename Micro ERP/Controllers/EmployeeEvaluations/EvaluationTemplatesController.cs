@@ -25,7 +25,7 @@ public class EvaluationTemplatesController : ControllerBase
 
     [HttpPost]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Create)]
+        Policy = HRPermissions.EmployeeEvaluation.Create)]
     public async Task<ActionResult<Result<EvaluationTemplateDto>>> Create(
         CreateEvaluationTemplateDto dto,
         CancellationToken ct)
@@ -45,7 +45,7 @@ public class EvaluationTemplatesController : ControllerBase
 
     [HttpGet("{id:int}")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.View)]
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<ActionResult<Result<EvaluationTemplateDto>>> GetById(int id,
         CancellationToken ct)
     {
@@ -64,7 +64,7 @@ public class EvaluationTemplatesController : ControllerBase
 
     [HttpGet]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.View)]
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<ActionResult<Result<List<EvaluationTemplateDto>>>> GetAll(
         CancellationToken ct = default)
     {
@@ -82,7 +82,7 @@ public class EvaluationTemplatesController : ControllerBase
 
     [HttpPut("{id:int}")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Update)]
+        Policy = HRPermissions.EmployeeEvaluation.Update)]
     public async Task<ActionResult<Result<EvaluationTemplateDto>>> Update(
         int id,
         UpdateEvaluationTemplateDto dto,
@@ -104,7 +104,7 @@ public class EvaluationTemplatesController : ControllerBase
 
     [HttpDelete("{id:int}")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Delete)]
+        Policy = HRPermissions.EmployeeEvaluation.Delete)]
     public async Task<ActionResult<Result<bool>>> Delete(
         int id,
         CancellationToken ct)

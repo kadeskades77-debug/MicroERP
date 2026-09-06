@@ -31,7 +31,7 @@ public class EmployeeEvaluationQueriesController : ControllerBase
 
     [HttpGet("{id:int}")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.View)]
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<ActionResult<Result<EmployeeEvaluationDto>>> GetById(
         int id,
         CancellationToken ct)
@@ -50,7 +50,7 @@ public class EmployeeEvaluationQueriesController : ControllerBase
     // =========================================================
 
     [HttpGet]
-    [Authorize(Policy = HRPermissions.EmployeeEvaluations.View)]
+    [Authorize(Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<ActionResult<Result<PagedResult<EmployeeEvaluationListDto>>>>
         GetPaged(
             [FromQuery] EmployeeEvaluationFilterDto filter,
@@ -71,7 +71,7 @@ public class EmployeeEvaluationQueriesController : ControllerBase
 
     [HttpGet("employee/{employeeId:int}/month")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.View)]
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<
         ActionResult<Result<EmployeeEvaluationDto>>>
         GetByEmployeeAndMonth(
@@ -97,7 +97,7 @@ public class EmployeeEvaluationQueriesController : ControllerBase
 
     [HttpGet("ranking")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.View)]
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<ActionResult<Result<List<EmployeeEvaluationRankingDto>>>>
         GetRanking([FromQuery] EvaluationRankingFilterDto filter,
             CancellationToken ct)
@@ -117,7 +117,7 @@ public class EmployeeEvaluationQueriesController : ControllerBase
 
     [HttpGet("export/excel")]
     [Authorize(
-    Policy = HRPermissions.EmployeeEvaluations.Export)]
+    Policy = HRPermissions.EmployeeEvaluation.Export)]
     public async Task<IActionResult> ExportAllEmployees(
     [FromQuery] EmployeeEvaluationExcelFilterDto filter,
     CancellationToken ct)
@@ -157,7 +157,7 @@ public class EmployeeEvaluationQueriesController : ControllerBase
 
     [HttpGet("employee/export/excel")]
     [Authorize(
-    Policy = HRPermissions.EmployeeEvaluations.Export)]
+    Policy = HRPermissions.EmployeeEvaluation.Export)]
     public async Task<IActionResult> ExportEmployeeHistory(
     [FromQuery] EmployeeEvaluationHistoryExcelFilterDto filter,
     CancellationToken ct)
@@ -209,7 +209,7 @@ public class EmployeeEvaluationQueriesController : ControllerBase
 
     [HttpGet("employee/monthly/export/excel")]
     [Authorize(
-     Policy = HRPermissions.EmployeeEvaluations.Export)]
+     Policy = HRPermissions.EmployeeEvaluation.Export)]
     public async Task<IActionResult> ExportEmployeeMonthly(
      [FromQuery] EmployeeMonthlyEvaluationExcelFilterDto filter,
      CancellationToken ct)
@@ -261,7 +261,7 @@ public class EmployeeEvaluationQueriesController : ControllerBase
     [HttpGet(
         "department/{departmentId:int}/export/excel")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Export)]
+        Policy = HRPermissions.EmployeeEvaluation.Export)]
     public async Task<IActionResult> ExportDepartment(
         int departmentId,
         [FromQuery] DepartmentEvaluationExcelFilterDto filter,

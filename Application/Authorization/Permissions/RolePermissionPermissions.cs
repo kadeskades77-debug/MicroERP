@@ -9,7 +9,6 @@
             public const string Create = "RolePermission.Role.Create";
             public const string Update = "RolePermission.Role.Update";
             public const string Delete = "RolePermission.Role.Delete";
-            public const string AssignUsers = "RolePermission.Role.AssignUsers";
         }
         public static class UserRole
         {

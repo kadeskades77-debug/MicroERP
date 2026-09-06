@@ -26,7 +26,7 @@ public class EvaluationPeriodsController : ControllerBase
 
     [HttpPost]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Create)]
+        Policy = HRPermissions.EmployeeEvaluation.Create)]
     public async Task<ActionResult<Result<EvaluationPeriodDto>>> Create(
         CreateEvaluationPeriodDto dto,
         CancellationToken ct)
@@ -46,7 +46,7 @@ public class EvaluationPeriodsController : ControllerBase
 
     [HttpGet("{id:int}")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.View)]
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<ActionResult<Result<EvaluationPeriodDto>>> GetById(
         int id,
         CancellationToken ct)
@@ -66,7 +66,7 @@ public class EvaluationPeriodsController : ControllerBase
 
     [HttpGet]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.View)]
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<ActionResult<Result<List<EvaluationPeriodDto>>>> GetAll(
         CancellationToken ct)
     {
@@ -84,7 +84,7 @@ public class EvaluationPeriodsController : ControllerBase
 
     [HttpPut("{id:int}")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Update)]
+        Policy = HRPermissions.EmployeeEvaluation.Update)]
     public async Task<ActionResult<Result<EvaluationPeriodDto>>> Update(
         int id,
         UpdateEvaluationPeriodDto dto,
@@ -106,7 +106,7 @@ public class EvaluationPeriodsController : ControllerBase
 
     [HttpDelete("{id:int}")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Delete)]
+        Policy = HRPermissions.EmployeeEvaluation.Delete)]
     public async Task<ActionResult<Result<bool>>> Delete(
         int id,
         CancellationToken ct)
@@ -126,7 +126,7 @@ public class EvaluationPeriodsController : ControllerBase
 
     [HttpPost("{id:int}/open")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Update)]
+        Policy = HRPermissions.EmployeeEvaluation.Update)]
     public async Task<ActionResult<Result<bool>>> Open(
         int id,
         CancellationToken ct)
@@ -146,7 +146,7 @@ public class EvaluationPeriodsController : ControllerBase
 
     [HttpPost("{id:int}/close")]
     [Authorize(
-        Policy = HRPermissions.EmployeeEvaluations.Update)]
+        Policy = HRPermissions.EmployeeEvaluation.Update)]
     public async Task<ActionResult<Result<bool>>> Close(
         int id,
         CancellationToken ct)

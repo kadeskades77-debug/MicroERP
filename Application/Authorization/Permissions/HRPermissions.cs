@@ -1,42 +1,97 @@
 ﻿public static class HRPermissions
 {
-    public static class Employee
-    {
-        public const string View = "HR.Employee.View";
-        public const string Create = "HR.Employee.Create";
-        public const string TransferDepartment = "HR.Employee.TransferDepartment";
-        public const string UpdateSalary = "HR.Employee.UpdateSalary";
-        public const string Update = "HR.Employee.Update";
-        public const string Delete = "HR.Employee.Delete";
-    }
+   
+        // =========================================================
+        // Employee
+        // =========================================================
 
-    public static class Department
-    {
-        public const string View = "HR.Department.View";
-        public const string Create = "HR.Department.Create";
-        public const string Update = "HR.Department.Update";
-        public const string AssignManager = "HR.Department.AssignManager";
-        public const string Delete = "HR.Department.Delete";
-    }
+        public static class Employee
+        {
+            public const string View = "HR.Employee.View";
+            public const string Create = "HR.Employee.Create";
+            public const string Update = "HR.Employee.Update";
+            public const string Delete = "HR.Employee.Delete";
+        }
+
+
+        // =========================================================
+        // Employee Department
+        // =========================================================
+
+        public static class EmployeeDepartment
+        {
+            public const string Transfer =
+                "HR.EmployeeDepartment.Transfer";
+        }
+
+
+        // =========================================================
+        // Employee Salary
+        // =========================================================
+
+        public static class EmployeeSalary
+        {
+            public const string Update =
+                "HR.EmployeeSalary.Update";
+        }
+
+
+        // =========================================================
+        // Department
+        // =========================================================
+
+        public static class Department
+        {
+            public const string View = "HR.Department.View";
+            public const string Create = "HR.Department.Create";
+            public const string Update = "HR.Department.Update";
+            public const string Delete = "HR.Department.Delete";
+        }
+
+
+        // =========================================================
+        // Department Manager
+        // =========================================================
+
+        public static class DepartmentManager
+        {
+            public const string Assign =
+                "HR.DepartmentManager.Assign";
+
+            public const string Transfer =
+                "HR.DepartmentManager.Transfer";
+        }
+
 
     public static class EmployeeLeave
     {
-        public const string View = "Employees.Leaves.View";
-        public const string Create = "Employees.Leaves.Create";
-        public const string Update = "Employees.Leaves.Update";
-        public const string Delete = "Employees.Leaves.Delete";
-        public const string Approve = "Employees.Leaves.Approve";
-        public const string Reject = "Employees.Leaves.Reject";
-        public const string Cancel = "Employees.Leaves.Cancel";
-        public const string ViewBalance = "Employees.Leaves.ViewBalance";
+        public const string View = "HR.EmployeeLeave.View";
+        public const string Create = "HR.EmployeeLeave.Create";
+        public const string Update = "HR.EmployeeLeave.Update";
+        public const string Delete = "HR.EmployeeLeave.Delete";
+        public const string Cancel = "HR.EmployeeLeave.Cancel";
+    }
+
+    public static class EmployeeLeaveApproval
+    {
+        public const string Approve = "HR.EmployeeLeaveApproval.Approve";
+        public const string Reject = "HR.EmployeeLeaveApproval.Reject";
+    }
+    public static class EmployeeLeaveBalance
+    {
+        public const string View = "HR.EmployeeLeaveBalance.View";
     }
     public static class EmployeeSpecialLeave
     {
-        public const string View = "Employees.SpecialLeaves.View";
-        public const string Create = "Employees.SpecialLeaves.Create";
-        public const string Approve = "Employees.SpecialLeaves.Approve";
-        public const string Reject = "Employees.SpecialLeaves.Reject";
-        public const string Cancel = "Employees.SpecialLeaves.Cancel";
+        public const string View = "HR.EmployeeSpecialLeave.View";
+        public const string Create = "HR.EmployeeSpecialLeave.Create";
+        public const string Cancel = "HR.EmployeeSpecialLeave.Cancel";
+    }
+
+    public static class EmployeeSpecialLeaveApproval
+    {
+        public const string Approve = "HR.EmployeeSpecialLeaveApproval.Approve";
+        public const string Reject = "HR.EmployeeSpecialLeaveApproval.Reject";
     }
     public static class Attendance
     {
@@ -46,16 +101,16 @@
         public const string Export = "HR.Attendance.Export";
         public const string CheckIn = "HR.Attendance.CheckIn";
         public const string CheckOut = "HR.Attendance.CheckOut";
-        public const string Approve = "HR.Attendance.Approve";
-        public const string Reject = "HR.Attendance.Reject";
-
     }
     public static class AttendanceCorrection
     {
-        public const string Create ="HR.AttendanceCorrection.Create";
-        public const string Approve ="HR.AttendanceCorrection.Approve";
-        public const string Reject ="HR.AttendanceCorrection.Reject";
-        public const string View ="HR.AttendanceCorrection.View";
+        public const string View = "HR.AttendanceCorrection.View";
+        public const string Create = "HR.AttendanceCorrection.Create";
+    }
+    public static class AttendanceCorrectionApproval
+    {
+        public const string Approve = "HR.AttendanceCorrectionApproval.Approve";
+        public const string Reject = "HR.AttendanceCorrectionApproval.Reject";
     }
     public static class WorkSchedule
     {
@@ -72,12 +127,12 @@
         public const string Delete = "HR.Attendance.Device.Delete";
         public const string ReceiveLogs ="HR.Attendance.Device.ReceiveLogs"; // استقبال سجلات البصمة من الجهاز
     }
-    public static class Holidays
+    public static class Holiday
     {
-        public const string View = "HR.Holidays.View";
-        public const string Create = "HR.Holidays.Create";
-        public const string Update = "HR.Holidays.Update";
-        public const string Delete = "HR.Holidays.Delete";
+        public const string View = "HR.Holiday.View";
+        public const string Create = "HR.Holiday.Create";
+        public const string Update = "HR.Holiday.Update";
+        public const string Delete = "HR.Holiday.Delete";
     }
     public static class Payroll
     {
@@ -85,17 +140,24 @@
         public const string Create = "HR.Payroll.Create";
         public const string Update = "HR.Payroll.Update";
         public const string Delete = "HR.Payroll.Delete";
-        public const string Approve = "HR.Payroll.Approve";
-        public const string Pay = "HR.Payroll.Pay";
     }
-    public static class PayrollLoans
+    public static class PayrollApproval
     {
-        public const string View = "HR.PayrollLoans.View";
-        public const string Create = "HR.PayrollLoans.Create";
-        public const string Update = "HR.PayrollLoans.Update";
-        public const string Cancel = "HR.PayrollLoans.Cancel";
-        public const string Suspend = "HR.PayrollLoans.Suspend";
-        public const string Resume = "HR.PayrollLoans.Resume";
+        public const string Approve = "HR.PayrollApproval.Approve";
+        public const string Reject = "HR.PayrollApproval.Reject";
+    }
+    public static class PayrollPayment
+    {
+        public const string Pay = "HR.PayrollPayment.Pay";
+    }
+    public static class PayrollLoan
+    {
+        public const string View = "HR.PayrollLoan.View";
+        public const string Create = "HR.PayrollLoan.Create";
+        public const string Update = "HR.PayrollLoan.Update";
+        public const string Cancel = "HR.PayrollLoan.Cancel";
+        public const string Suspend = "HR.PayrollLoan.Suspend";
+        public const string Resume = "HR.PayrollLoan.Resume";
     }
     public static class Overtime
     {
@@ -103,18 +165,24 @@
         public const string Create = "HR.Overtime.Create";
         public const string Update = "HR.Overtime.Update";
         public const string Delete = "HR.Overtime.Delete";
-        public const string Approve = "HR.Overtime.Approve";
-        public const string Reject = "HR.Overtime.Reject";
     }
-    public static class EmployeeEvaluations
+    public static class OvertimeApproval
     {
-        public const string View = "HR.EmployeeEvaluations.View";
-        public const string Create = "HR.EmployeeEvaluations.Create";
-        public const string Update = "HR.EmployeeEvaluations.Update";
-        public const string Delete = "HR.EmployeeEvaluations.Delete";
-        public const string Submit = "HR.EmployeeEvaluations.Submit";
-        public const string Approve = "HR.EmployeeEvaluations.Approve";
-        public const string Reject = "HR.EmployeeEvaluations.Reject";
-        public const string Export = "HR.EmployeeEvaluations.Export";
+        public const string Approve = "HR.OvertimeApproval.Approve";
+        public const string Reject = "HR.OvertimeApproval.Reject";
+    }
+    public static class EmployeeEvaluation
+    {
+        public const string View = "HR.EmployeeEvaluation.View";
+        public const string Create = "HR.EmployeeEvaluation.Create";
+        public const string Update = "HR.EmployeeEvaluation.Update";
+        public const string Delete = "HR.EmployeeEvaluation.Delete";
+        public const string Submit = "HR.EmployeeEvaluation.Submit";
+        public const string Export = "HR.EmployeeEvaluation.Export";
+    }
+    public static class EmployeeEvaluationApproval
+    {
+        public const string Approve = "HR.EmployeeEvaluationApproval.Approve";
+        public const string Reject = "HR.EmployeeEvaluationApproval.Reject";
     }
 }

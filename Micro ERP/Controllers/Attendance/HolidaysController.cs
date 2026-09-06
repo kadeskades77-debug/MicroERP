@@ -26,6 +26,7 @@ public class HolidaysController : ControllerBase
 
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = HRPermissions.Holiday.View)]
     public async Task<IActionResult> GetById(
         int id,
         CancellationToken cancellationToken)
@@ -44,7 +45,7 @@ public class HolidaysController : ControllerBase
 
 
     [HttpGet]
-    [Authorize(Policy = HRPermissions.Holidays.View)]
+    [Authorize(Policy = HRPermissions.Holiday.View)]
     public async Task<IActionResult> GetAll(
         [FromQuery] HolidayFilterDto filter,
         [FromQuery] PagedRequest request,
@@ -65,7 +66,7 @@ public class HolidaysController : ControllerBase
 
 
     [HttpGet("by-date")]
-    [Authorize(Policy = HRPermissions.Holidays.View)]
+    [Authorize(Policy = HRPermissions.Holiday.View)]
     public async Task<IActionResult> GetByDate(
         [FromQuery] DateOnly date,
         CancellationToken cancellationToken)
@@ -84,7 +85,7 @@ public class HolidaysController : ControllerBase
 
 
     [HttpPost]
-    [Authorize(Policy = HRPermissions.Holidays.Create)]
+    [Authorize(Policy = HRPermissions.Holiday.Create)]
     public async Task<IActionResult> Create(
         CreateHolidayDto dto,
         CancellationToken cancellationToken)
@@ -103,7 +104,7 @@ public class HolidaysController : ControllerBase
 
 
     [HttpPut("{id:int}")]
-    [Authorize(Policy = HRPermissions.Holidays.Update)]
+    [Authorize(Policy = HRPermissions.Holiday.Update)]
     public async Task<IActionResult> Update(int id,UpdateHolidayDto dto,
         CancellationToken cancellationToken)
     {
@@ -121,7 +122,7 @@ public class HolidaysController : ControllerBase
 
 
     [HttpDelete("{id:int}")]
-    [Authorize(Policy = HRPermissions.Holidays.Delete)]
+    [Authorize(Policy = HRPermissions.Holiday.Delete)]
     public async Task<IActionResult> Delete(int id,
         CancellationToken cancellationToken)
     {

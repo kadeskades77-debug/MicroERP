@@ -89,7 +89,7 @@ public class EmployeeOvertimesController : ControllerBase
 
 
     [HttpPut("{id:int}/approve")]
-    [Authorize(Policy = HRPermissions.Overtime.Approve)]
+    [Authorize(Policy = HRPermissions.OvertimeApproval.Approve)]
     public async Task<IActionResult> Approve(int id,
         CancellationToken cancellationToken)
     {
@@ -109,7 +109,7 @@ public class EmployeeOvertimesController : ControllerBase
 
 
     [HttpPut("{id:int}/reject")]
-    [Authorize(Policy = HRPermissions.Overtime.Reject)]
+    [Authorize(Policy = HRPermissions.OvertimeApproval.Reject)]
     public async Task<IActionResult> Reject(int id,
         [FromBody] string reason,
         CancellationToken cancellationToken)
@@ -130,7 +130,7 @@ public class EmployeeOvertimesController : ControllerBase
 
 
     [HttpPut("{id:int}/cancel")]
-    [Authorize(Policy = HRPermissions.Overtime.Reject)]
+    [Authorize(Policy = HRPermissions.Overtime.Delete)]
     public async Task<IActionResult> Cancel(int id,
     CancelEmployeeOvertimeDto dto,
     CancellationToken cancellationToken)

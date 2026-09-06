@@ -4,83 +4,102 @@ using MicroERP.Application.Authorization.Permissions;
 namespace MicroERP.Application.Authorization.Providers;
 
 public class IdentityDefinitionProvider
-    : IPermissionDefinitionProvider
+    : IMultiPermissionDefinitionProvider
 {
-    public PermissionGroupDefinition Group =>
+    public IEnumerable<PermissionGroupDefinition> Groups =>
+    [
         new(
-            key: "Identity",
-            name: "Identity Management",
-            description: "User account management permissions.",
-            isSystem: true
-        );
+            key: "User",
+            name: "Users",
+            description: "System user management permissions.",
+            isSystem: true),
 
+        new(
+            key: "UserPassword",
+            name: "User Password",
+            description: "User password management permissions.",
+            isSystem: true),
+
+        new(
+            key: "UserLock",
+            name: "User Lock",
+            description: "User account lock management permissions.",
+            isSystem: true),
+
+        new(
+            key: "UserActivation",
+            name: "User Activation",
+            description: "User account activation management permissions.",
+            isSystem: true)
+    ];
 
     public IEnumerable<PermissionDefinition> GetPermissions()
     {
-        return
-        [
-            new(
-                Group.Key,
-                IdentityPermissions.User.View,
-                "View Users",
-                "Allows viewing system users."
-            ),
+        // User
+        yield return new(
+            "User",
+            IdentityPermissions.User.View,
+            "View Users",
+            "Allows viewing system users."
+        );
 
-            new(
-                Group.Key,
-                IdentityPermissions.User.Register,
-                "Register User",
-                "Allows creating new users."
-            ),
+        yield return new(
+            "User",
+            IdentityPermissions.User.Register,
+            "Register Users",
+            "Allows registering new system users."
+        );
 
-            new(
-                Group.Key,
-                IdentityPermissions.User.ChangeEmail,
-                "Change User Email",
-                "Allows changing user email."
-            ),
+        yield return new(
+            "User",
+            IdentityPermissions.User.ChangeEmail,
+            "Change User Email",
+            "Allows changing the email address of system users."
+        );
 
-            new(
-                Group.Key,
-                IdentityPermissions.User.Lock,
-                "Lock User",
-                "Allows locking user accounts."
-            ),
+        yield return new(
+            "User",
+            IdentityPermissions.User.Delete,
+            "Delete Users",
+            "Allows deleting system users."
+        );
 
-            new(
-                Group.Key,
-                IdentityPermissions.User.Unlock,
-                "Unlock User",
-                "Allows unlocking user accounts."
-            ),
+        // User Password
+        yield return new(
+            "UserPassword",
+            IdentityPermissions.UserPassword.Reset,
+            "Reset User Password",
+            "Allows resetting passwords for system users."
+        );
 
-            new(
-                Group.Key,
-                IdentityPermissions.User.ResetPassword,
-                "Reset User Password",
-                "Allows resetting user password."
-            ),
+        // User Lock
+        yield return new(
+            "UserLock",
+            IdentityPermissions.UserLock.Lock,
+            "Lock Users",
+            "Allows locking system user accounts."
+        );
 
-            new(
-                Group.Key,
-                IdentityPermissions.User.Delete,
-                "Delete User",
-                "Allows deleting users."
-            ),
+        yield return new(
+            "UserLock",
+            IdentityPermissions.UserLock.Unlock,
+            "Unlock Users",
+            "Allows unlocking system user accounts."
+        );
 
-            new(
-                Group.Key,
-                IdentityPermissions.User.Activate,
-                "Activate User",
-                "Allows activating users."
-            ),
+        // User Activation
+        yield return new(
+            "UserActivation",
+            IdentityPermissions.UserActivation.Activate,
+            "Activate Users",
+            "Allows activating system user accounts."
+        );
 
-            new(
-                Group.Key,
-                IdentityPermissions.User.Deactivate,
-                "Deactivate User",
-                "Allows deactivating users."
-            )
-        ];
+        yield return new(
+            "UserActivation",
+            IdentityPermissions.UserActivation.Deactivate,
+            "Deactivate Users",
+            "Allows deactivating system user accounts."
+        );
     }
 }

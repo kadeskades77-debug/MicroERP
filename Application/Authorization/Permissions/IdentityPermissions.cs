@@ -13,22 +13,31 @@ public static class IdentityPermissions
         public const string ChangeEmail =
             "Identity.User.ChangeEmail";
 
-        public const string Lock =
-            "Identity.User.Lock";
-
-        public const string Unlock =
-            "Identity.User.Unlock";
-
-        public const string ResetPassword =
-            "Identity.User.ResetPassword";
-
         public const string Delete =
             "Identity.User.Delete";
+    }
 
+    public static class UserPassword
+    {
+        public const string Reset =
+            "Identity.UserPassword.Reset";
+    }
+
+    public static class UserLock
+    {
+        public const string Lock =
+            "Identity.UserLock.Lock";
+
+        public const string Unlock =
+            "Identity.UserLock.Unlock";
+    }
+
+    public static class UserActivation
+    {
         public const string Activate =
-            "Identity.User.Activate";
+            "Identity.UserActivation.Activate";
 
         public const string Deactivate =
-            "Identity.User.Deactivate";
+            "Identity.UserActivation.Deactivate";
     }
 }

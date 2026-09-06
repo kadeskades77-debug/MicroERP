@@ -13,6 +13,7 @@ namespace MicroERP.Application.Features.Departments.Validators
                 .MaximumLength(200);
 
             RuleFor(x => x.NameEn)
+                .NotEmpty()
                 .MaximumLength(200)
                 .When(x => !string.IsNullOrWhiteSpace(x.NameEn));
         }

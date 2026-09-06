@@ -1,6 +1,4 @@
 ﻿
-using Micro_ERP.Controllers;
-using MicroERP.Application.Authorization;
 using MicroERP.Application.Authorization.Permissions;
 using MicroERP.Application.Features.Authorization.PermissionGroups.DTOs;
 using MicroERP.Application.Features.Authorization.PermissionGroups.Interfaces;

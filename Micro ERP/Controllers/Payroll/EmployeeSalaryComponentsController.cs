@@ -46,7 +46,7 @@ public class EmployeeSalaryComponentsController : ControllerBase
 
     [HttpDelete("{id:int}")]
     [Authorize(
-        Policy = HRPermissions.Payroll.Create)]
+        Policy = HRPermissions.Payroll.Delete)]
     public async Task<IActionResult> Delete(int id,
         CancellationToken cancellationToken)
     {

@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
 
 namespace MicroERP.Application.Features.Departments.DTOs
 {
-    internal class DepartmentFilterDto
+    public class DepartmentFilterDto
     {
+        public string? Search { get; set; }
+
+        public bool? IsActive { get; set; }
+
+        public bool? HasManager { get; set; }
     }
 }

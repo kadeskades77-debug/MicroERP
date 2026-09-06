@@ -582,7 +582,7 @@ namespace MicroERP.Application.Features.Employees.Services
 
 
         public async Task<Result> DeleteAsync(int id,
-      CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
         {
             try
             {

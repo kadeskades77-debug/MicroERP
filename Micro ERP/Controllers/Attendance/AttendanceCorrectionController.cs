@@ -54,9 +54,8 @@ public class AttendanceCorrectionController : ControllerBase
 
     // اعتماد التصحيح
     [HttpPost("{id}/approve")]
-    [Authorize(Policy = HRPermissions.AttendanceCorrection.Approve)]
-    public async Task<IActionResult> Approve(
-        int id,
+    [Authorize(Policy = HRPermissions.AttendanceCorrectionApproval.Approve)]
+    public async Task<IActionResult> Approve(int id,
         CancellationToken cancellationToken)
     {
         var result =
@@ -71,9 +70,8 @@ public class AttendanceCorrectionController : ControllerBase
 
     // رفض التصحيح
     [HttpPost("{id}/reject")]
-    [Authorize(Policy = HRPermissions.AttendanceCorrection.Reject)]
-    public async Task<IActionResult> Reject(
-        int id,
+    [Authorize(Policy = HRPermissions.AttendanceCorrectionApproval.Reject)]
+    public async Task<IActionResult> Reject(int id,
         RejectAttendanceCorrectionDto dto,
         CancellationToken cancellationToken)
     {

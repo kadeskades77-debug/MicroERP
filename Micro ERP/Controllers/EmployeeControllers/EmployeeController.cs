@@ -84,7 +84,7 @@ public class EmployeeController : BaseApiController
     // =========================================================
 
     [HttpPut("{id:int}/transfer")]
-    [Authorize(Policy = HRPermissions.Employee.TransferDepartment)]
+    [Authorize(Policy = HRPermissions.EmployeeDepartment.Transfer)]
     public async Task<IActionResult> Transfer(int id,
         TransferEmployeeDto dto,
         CancellationToken cancellationToken)
@@ -104,7 +104,7 @@ public class EmployeeController : BaseApiController
     // =========================================================
 
     [HttpPut("{id:int}/salary")]
-    [Authorize(Policy = HRPermissions.Employee.UpdateSalary)]
+    [Authorize(Policy = HRPermissions.EmployeeSalary.Update)]
     public async Task<IActionResult> UpdateSalary(int id,
         UpdateEmployeeSalaryDto dto,
         CancellationToken cancellationToken)

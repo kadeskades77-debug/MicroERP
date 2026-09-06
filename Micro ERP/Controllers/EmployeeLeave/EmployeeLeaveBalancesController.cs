@@ -22,7 +22,7 @@ public class EmployeeLeaveBalancesController : ControllerBase
 
     // Get employee leave balances
     [HttpGet]
-    [Authorize(Policy = HRPermissions.EmployeeLeave.ViewBalance)]
+    [Authorize(Policy = HRPermissions.EmployeeLeaveBalance.View)]
     public async Task<IActionResult> GetByEmployee(int employeeId,[FromQuery] int year,
         CancellationToken cancellationToken)
     {

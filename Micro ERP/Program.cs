@@ -188,17 +188,17 @@ builder.Services.AddSwaggerGen(c =>
 #region Permission Providers
 
 builder.Services.AddScoped<
-    IPermissionDefinitionProvider,
+    IMultiPermissionDefinitionProvider,
     HRDefinitionProvider>();
 
 
 builder.Services.AddScoped<
-    IPermissionDefinitionProvider,
+    IMultiPermissionDefinitionProvider,
     RolePermissionDefinitionProvider>();
 
 
 builder.Services.AddScoped<
-    IPermissionDefinitionProvider,
+    IMultiPermissionDefinitionProvider,
     IdentityDefinitionProvider>();
 
 
@@ -314,9 +314,9 @@ using (var scope = app.Services.CreateScope())
         services.GetRequiredService<RoleManager<ApplicationRole>>();
 
 
-    //await IdentitySeeder.SeedAsync(
-    //    userManager,
-    //    roleManager);
+    await IdentitySeeder.SeedAsync(
+        userManager,
+        roleManager);
     var seeder =
         scope.ServiceProvider
             .GetRequiredService<PermissionSeeder>();

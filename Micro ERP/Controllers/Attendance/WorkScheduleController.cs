@@ -1,5 +1,6 @@
 ﻿using MicroERP.Application.Features.EmployeeAttendance.WorkSchedules.DTOs;
 using MicroERP.Application.Features.EmployeeAttendance.WorkSchedules.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Micro_ERP.Controllers.Attendance;
@@ -23,6 +24,7 @@ public class WorkScheduleController : ControllerBase
 
 
     [HttpGet]
+    [Authorize(Policy = HRPermissions.WorkSchedule.View)]
     public async Task<IActionResult> GetAll(
         CancellationToken cancellationToken)
     {
@@ -34,6 +36,7 @@ public class WorkScheduleController : ControllerBase
 
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = HRPermissions.WorkSchedule.View)]
     public async Task<IActionResult> GetById(int id,
         CancellationToken cancellationToken)
     {
@@ -48,6 +51,7 @@ public class WorkScheduleController : ControllerBase
 
 
     [HttpPost]
+    [Authorize(Policy = HRPermissions.WorkSchedule.Create)]
     public async Task<IActionResult> Create(CreateWorkScheduleDto dto,
         CancellationToken cancellationToken)
     {
@@ -59,6 +63,7 @@ public class WorkScheduleController : ControllerBase
 
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = HRPermissions.WorkSchedule.Update)]
     public async Task<IActionResult> Update(int id,UpdateWorkScheduleDto dto,
         CancellationToken cancellationToken)
     {
@@ -70,6 +75,7 @@ public class WorkScheduleController : ControllerBase
 
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = HRPermissions.WorkSchedule.Delete)]
     public async Task<IActionResult> Delete(int id,
         CancellationToken cancellationToken)
     {

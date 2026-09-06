@@ -107,7 +107,7 @@ public class EmployeeLeavesController : ControllerBase
 
     // Approve leave request
     [HttpPost("employee-leaves/{id}/approve")]
-    [Authorize(Policy = HRPermissions.EmployeeLeave.Approve)]
+    [Authorize(Policy = HRPermissions.EmployeeLeaveApproval.Approve)]
     public async Task<IActionResult> Approve(int id,
         CancellationToken cancellationToken)
     {
@@ -128,7 +128,7 @@ public class EmployeeLeavesController : ControllerBase
 
     // Reject leave request
     [HttpPost("employee-leaves/{id}/reject")]
-    [Authorize(Policy = HRPermissions.EmployeeLeave.Reject)]
+    [Authorize(Policy = HRPermissions.EmployeeLeaveApproval.Reject)]
     public async Task<IActionResult> Reject(int id,RejectLeaveDto dto,
         CancellationToken cancellationToken)
     {

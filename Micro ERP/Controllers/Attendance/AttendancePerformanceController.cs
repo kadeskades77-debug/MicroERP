@@ -1,6 +1,7 @@
 ﻿using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.EmployeeAttendance.Attendance.DTOs.Dashboard;
 using MicroERP.Application.Features.EmployeeAttendance.Attendance.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Micro_ERP.Controllers.Attendance;
@@ -25,6 +26,8 @@ public class AttendancePerformanceController : ControllerBase
 
 
     [HttpPost("calculate")]
+    [Authorize(
+        Policy = HRPermissions.EmployeeEvaluation.Create)]
     public async Task<IActionResult> Calculate(
         int employeeId,
         [FromQuery] int year,
@@ -46,6 +49,8 @@ public class AttendancePerformanceController : ControllerBase
 
 
     [HttpPost("calculate/ALL")]
+    [Authorize(
+        Policy = HRPermissions.EmployeeEvaluation.Create)]
     public async Task<IActionResult> CalculateAllAsync(
         [FromQuery] int year,
         [FromQuery] int month,
@@ -66,6 +71,8 @@ public class AttendancePerformanceController : ControllerBase
 
 
     [HttpGet("Month")]
+    [Authorize(
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<IActionResult> GetByMonth(
         int employeeId,
         int year,
@@ -90,6 +97,8 @@ public class AttendancePerformanceController : ControllerBase
 
 
     [HttpGet("{employeeId:int}/history")]
+    [Authorize(
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<IActionResult> GetHistory(
         int employeeId,
         CancellationToken cancellationToken)
@@ -108,6 +117,8 @@ public class AttendancePerformanceController : ControllerBase
 
 
     [HttpGet("top")]
+    [Authorize(
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<IActionResult> GetTop(
         [FromQuery] int year,
         [FromQuery] int month,
@@ -130,6 +141,8 @@ public class AttendancePerformanceController : ControllerBase
 
 
     [HttpGet("lowest")]
+    [Authorize(
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<IActionResult> GetLowest(
         [FromQuery] int year,
         [FromQuery] int month,
@@ -152,6 +165,8 @@ public class AttendancePerformanceController : ControllerBase
 
 
     [HttpPost("paged")]
+    [Authorize(
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<IActionResult> GetPaged(
      [FromBody] AttendancePerformanceFilterDto filter,
      [FromQuery] PagedRequest request,
@@ -168,6 +183,8 @@ public class AttendancePerformanceController : ControllerBase
     }
 
     [HttpGet("dashboard")]
+    [Authorize(
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<IActionResult> GetDashboard(
     [FromQuery] int year,
     [FromQuery] int month,
@@ -183,6 +200,8 @@ public class AttendancePerformanceController : ControllerBase
     }
 
     [HttpGet("statistics")]
+    [Authorize(
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<IActionResult> GetMonthlyStatistics(
     [FromQuery] int year,
     [FromQuery] int month,
@@ -198,6 +217,8 @@ public class AttendancePerformanceController : ControllerBase
     }
 
     [HttpGet("employees-summary")]
+    [Authorize(
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<IActionResult> GetEmployeePerformanceSummary(
     [FromQuery] int year,
     [FromQuery] int month,
@@ -213,6 +234,8 @@ public class AttendancePerformanceController : ControllerBase
     }
 
     [HttpGet("departments-summary")]
+    [Authorize(
+        Policy = HRPermissions.EmployeeEvaluation.View)]
     public async Task<IActionResult> GetDepartmentPerformanceSummary(
     [FromQuery] int year,
     [FromQuery] int month,

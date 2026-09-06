@@ -8,6 +8,8 @@
 
         public string NameAr { get; set; } = null!;
 
+        public string NameEn { get; set; } = null!;
+
         public string? ManagerName { get; set; }
 
         public bool IsActive { get; set; }

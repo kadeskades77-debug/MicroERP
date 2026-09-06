@@ -1,5 +1,4 @@
-﻿using Micro_ERP.Controllers;
-using MicroERP.Application.Common.Models;
+﻿
 using MicroERP.Application.Features.Departments.DTOs;
 using MicroERP.Application.Features.Departments.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -20,104 +19,136 @@ namespace Micro_ERP.Controllers.EmployeeControllers
 
         [HttpGet]
         [Authorize(Policy = HRPermissions.Department.View)]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(
+       [FromQuery] DepartmentFilterDto filter,
+       CancellationToken cancellationToken)
         {
-            var result = await _departmentService.GetAllAsync();
-
-            if (result is null)
-                return NotFound();
+            var result =
+                await _departmentService.GetAllAsync(
+                    filter,
+                    cancellationToken);
 
             return Ok(result);
         }
 
         [HttpGet("{id:int}")]
         [Authorize(Policy = HRPermissions.Department.View)]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(int id,
+        CancellationToken cancellationToken)
         {
-            var result = await _departmentService.GetByIdAsync(id);
-
-            if (result is null)
-                return NotFound();
+            var result =
+                await _departmentService.GetByIdAsync(
+                    id,
+                    cancellationToken);
 
             return Ok(result);
         }
 
         [HttpPost]
         [Authorize(Policy = HRPermissions.Department.Create)]
-        public async Task<IActionResult> Create(CreateDepartmentDto dto)
+        public async Task<IActionResult> Create(
+         CreateDepartmentDto dto,
+         CancellationToken cancellationToken)
         {
             var result =
-                await _departmentService.CreateAsync(dto);
+                await _departmentService.CreateAsync(
+                    dto,
+                    cancellationToken);
 
             return Ok(result);
         }
 
         [HttpPatch("{id:int}")]
         [Authorize(Policy = HRPermissions.Department.Update)]
-        public async Task<IActionResult> Update( int id,UpdateDepartmentDto dto)
+        public async Task<IActionResult> Update(int id,
+         UpdateDepartmentDto dto,
+         CancellationToken cancellationToken)
         {
-            var result = await _departmentService.UpdateAsync(id, dto);
+            var result =
+                await _departmentService.UpdateAsync(
+                    id,
+                    dto,
+                    cancellationToken);
 
             return Ok(result);
         }
 
         [HttpPut("{id:int}/manager")]
-        [Authorize(Policy = HRPermissions.Department.AssignManager)]
-        public async Task<IActionResult> AssignManager(int id,AssignDepartmentManagerDto dto)
+        [Authorize(Policy = HRPermissions.DepartmentManager.Assign)]
+        public async Task<IActionResult> AssignManager(int id,
+        AssignDepartmentManagerDto dto,
+        CancellationToken cancellationToken)
         {
             var result =
                 await _departmentService.AssignManagerAsync(
                     id,
-                    dto);
+                    dto,
+                    cancellationToken);
 
             return Ok(result);
         }
 
         [HttpPut("{managerEmployeeId:int}/transfer-manager")]
-        [Authorize(Policy = HRPermissions.Department.AssignManager)]
-        public async Task<IActionResult> TransferManager(int managerEmployeeId,TransferDepartmentManagerDto dto)
+        [Authorize(Policy = HRPermissions.DepartmentManager.Transfer)]
+        public async Task<IActionResult> TransferManager(
+        int managerEmployeeId,
+        TransferDepartmentManagerDto dto,
+        CancellationToken cancellationToken)
         {
-            var result = await _departmentService
-                .TransferDepartmentManagerAsync(
+            var result =
+                await _departmentService.TransferDepartmentManagerAsync(
                     managerEmployeeId,
-                    dto);
-
-            if (!result.Success)
-                return BadRequest(result);
+                    dto,
+                    cancellationToken);
 
             return Ok(result);
         }
 
         [HttpDelete("{id:int}")]
         [Authorize(Policy = HRPermissions.Department.Delete)]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id,
+        CancellationToken cancellationToken)
         {
-            await _departmentService.DeleteAsync(id);
+            var result =
+                await _departmentService.DeleteAsync(
+                    id,
+                    cancellationToken);
 
-            return Ok(new Result
-            {
-                Success = true,
-                Message = "Department Deleted successfully."
-            });
+            return Ok(result);
         }
 
-        [HttpPatch("{id}/restore")]
+        [HttpPatch("{id:int}/restore")]
         [Authorize(Policy = HRPermissions.Department.Delete)]
-        public async Task<IActionResult> Restore(int id)
+        public async Task<IActionResult> Restore(int id,
+        CancellationToken cancellationToken)
         {
-            await _departmentService.RestoreAsync(id);
+            var result =
+                await _departmentService.RestoreAsync(
+                    id,
+                    cancellationToken);
 
-            return Ok(new Result
-            {
-                Success = true,
-                Message = "Department restored successfully."
-            });
+            return Ok(result);
         }
+
 
         [HttpGet("lookup")]
-        public async Task<IActionResult> Lookup()
+        [Authorize(Policy = HRPermissions.Department.View)]
+        public async Task<IActionResult> Lookup(
+         CancellationToken cancellationToken)
         {
-            return Ok(await _departmentService.GetLookupAsync());
+            return Ok(
+                await _departmentService
+                    .GetLookupAsync(cancellationToken));
+        }
+
+        [HttpGet("lookup/without-manager")]
+        [Authorize(Policy = HRPermissions.Department.View)]
+        public async Task<IActionResult> LookupWithoutManager(
+        CancellationToken cancellationToken)
+        {
+            return Ok(
+                await _departmentService
+                    .GetDepartmentsWithoutManagerAsync(cancellationToken));
         }
     }
 }
