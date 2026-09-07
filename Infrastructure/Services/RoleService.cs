@@ -27,341 +27,357 @@ public class RoleService : IRoleService
         _auditService = auditService;
     }
 
-
-
     //================ GET ALL =================
 
-    public async Task<Result<List<RoleDto>>> GetAllAsync()
+    public async Task<Result<List<RoleDto>>> GetAllAsync(
+        CancellationToken cancellationToken = default)
     {
         var roles = await _roleManager.Roles
+            .AsNoTracking()
             .OrderBy(x => x.Name)
-            .ToListAsync();
-
-
-        var result = roles.Select(x => new RoleDto
-        {
-            Id = x.Id,
-            Name = x.Name!,
-            Description = x.Description,
-            IsSystem = x.IsSystem,
-            PermissionGroupKeys = new List<string>()
-        })
-        .ToList();
-
+            .Select(x => new RoleDto
+            {
+                Id = x.Id,
+                Name = x.Name!,
+                Description = x.Description,
+                IsSystem = x.IsSystem,
+                PermissionGroupKeys = new List<string>()
+            })
+            .ToListAsync(cancellationToken);
 
         return Result<List<RoleDto>>
-            .Succeeded(result);
+            .Succeeded(roles);
     }
 
     //================ GET BY ID =================
 
-    public async Task<Result<RoleDto>> GetByIdAsync(string id)
+    public async Task<Result<RoleDto>> GetByIdAsync(string id,
+        CancellationToken cancellationToken = default)
     {
         var role = await _roleManager.Roles
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .AsNoTracking()
+            .Where(x => x.Id == id)
+            .Select(x => new RoleDto
+            {
+                Id = x.Id,
+                Name = x.Name!,
+                Description = x.Description,
+                IsSystem = x.IsSystem,
 
+                PermissionGroupKeys =
+                    x.RolePermissionGroups
+                        .Select(rg => rg.PermissionGroup.Key)
+                        .ToList()
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (role is null)
             return Result<RoleDto>
                 .Failure("Role not found.");
 
-
-        return Result<RoleDto>.Succeeded(
-            new RoleDto
-            {
-                Id = role.Id,
-                Name = role.Name!,
-                Description = role.Description,
-                IsSystem = role.IsSystem,
-                PermissionGroupKeys = new List<string>()
-            });
+        return Result<RoleDto>
+            .Succeeded(role);
     }
 
     //================ CREATE =================
 
-    public async Task<Result> CreateAsync(CreateRoleDto dto)
+    public async Task<Result> CreateAsync(
+        CreateRoleDto dto,
+        CancellationToken cancellationToken = default)
     {
-        return await ExecuteInTransaction(async () =>
-        {
-            var normalizedName =
-                _roleManager.NormalizeKey(
-                    dto.Name.Trim());
-
-
-
-            var exists =
-                await _roleManager.Roles
-                .AnyAsync(x =>
-                    x.NormalizedName == normalizedName);
-
-
-
-            if (exists)
-                return Result.Failure(
-                    "Role already exists.");
-
-
-
-            var role = new ApplicationRole
+        return await ExecuteInTransaction(
+            async () =>
             {
-                Name = dto.Name.Trim(),
-                Description = dto.Description?.Trim(),
-                IsSystem = false
-            };
+                if (string.IsNullOrWhiteSpace(dto.Name))
+                    return Result.Failure(
+                        "Role name is required.");
 
-
-
-            var identityResult =
-                await _roleManager.CreateAsync(role);
-
-
-
-            var result =
-                HandleIdentityResult(identityResult);
-
-
-
-            if (!result.Success)
-                return result;
-            await _auditService.LogAsync(
-      AuditActions.Create,
-      nameof(ApplicationRole),
-      role.Id,
-      null,
-      new
-      {
-          role.Name,
-          role.Description,
-      });
-
-
-            return Result.Succeeded(
-                "Role created successfully.");
-        });
-    }
-
-
-    //================ UPDATE =================
-
-    public async Task<Result> UpdateAsync(string id,UpdateRoleDto dto)
-    {
-        return await ExecuteInTransaction(async () =>
-        {
-            var role = await _roleManager.Roles
-                .FirstOrDefaultAsync(x => x.Id == id);
-
-            if (role is null)
-                return Result.Failure(
-                    "Role not found.");
-
-            if (role.IsSystem)
-                return Result.Failure(
-                    "System roles cannot be modified.");
-
-
-            var oldValues = new
-            {
-                role.Name,
-                role.Description,
-
-                PermissionGroups = await _context.RolePermissionGroups
-                    .Where(x => x.RoleId == role.Id)
-                    .Select(x => x.PermissionGroup.Key)
-                    .ToListAsync()
-            };
-
-
-            if (!string.IsNullOrWhiteSpace(dto.Name))
-            {
                 var name = dto.Name.Trim();
 
                 var normalizedName =
                     _roleManager.NormalizeKey(name);
 
-                var exists = await _roleManager.Roles
-                    .AnyAsync(x =>
-                        x.Id != id &&
-                        x.NormalizedName == normalizedName);
+                var exists =
+                    await _roleManager.Roles
+                        .AnyAsync(
+                            x => x.NormalizedName == normalizedName,
+                            cancellationToken);
 
                 if (exists)
                     return Result.Failure(
-                        "Role name already exists.");
+                        "Role already exists.");
 
-                role.Name = name;
-            }
+                var role = new ApplicationRole
+                {
+                    Name = name,
+                    Description = dto.Description?.Trim(),
+                    IsSystem = false
+                };
 
+                var identityResult =
+                    await _roleManager.CreateAsync(role);
 
-            if (dto.Description != null)
+                var result =
+                    HandleIdentityResult(identityResult);
+
+                if (!result.Success)
+                    return result;
+
+                await _auditService.LogAsync(
+                    AuditActions.Create,
+                    nameof(ApplicationRole),
+                    role.Id,
+                    null,
+                    new
+                    {
+                        role.Name,
+                        role.Description
+                    },
+                    cancellationToken);
+
+                return Result.Succeeded(
+                    "Role created successfully.");
+            },
+            cancellationToken);
+    }
+
+    //================ UPDATE =================
+
+    public async Task<Result> UpdateAsync(string id,
+        UpdateRoleDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        return await ExecuteInTransaction(
+            async () =>
             {
-                role.Description = dto.Description.Trim();
-            }
+                var role =
+                    await _roleManager.Roles
+                        .FirstOrDefaultAsync(
+                            x => x.Id == id,
+                            cancellationToken);
 
+                if (role is null)
+                    return Result.Failure(
+                        "Role not found.");
 
-            var identityResult =
-                await _roleManager.UpdateAsync(role);
+                if (role.IsSystem)
+                    return Result.Failure(
+                        "System roles cannot be modified.");
 
-            var result =
-                HandleIdentityResult(identityResult);
+                var oldPermissionGroups =
+                    await _context.RolePermissionGroups
+                        .Where(x => x.RoleId == role.Id)
+                        .Select(x => x.PermissionGroup.Key)
+                        .ToListAsync(cancellationToken);
 
-            if (!result.Success)
-                return result;
-
-
-            await _auditService.LogAsync(
-                AuditActions.Update,
-                nameof(ApplicationRole),
-                role.Id,
-                oldValues,
-                new
+                var oldValues = new
                 {
                     role.Name,
-                    role.Description
-                });
+                    role.Description,
+                    PermissionGroups = oldPermissionGroups
+                };
 
-            return Result.Succeeded(
-                "Role updated successfully.");
-        });
+                // ---------- Name ----------
+
+                if (!string.IsNullOrWhiteSpace(dto.Name))
+                {
+                    var name = dto.Name.Trim();
+
+                    var normalizedName =
+                        _roleManager.NormalizeKey(name);
+
+                    var exists =
+                        await _roleManager.Roles
+                            .AnyAsync(
+                                x =>
+                                    x.Id != id &&
+                                    x.NormalizedName == normalizedName,
+                                cancellationToken);
+
+                    if (exists)
+                        return Result.Failure(
+                            "Role name already exists.");
+
+                    role.Name = name;
+                }
+
+                // ---------- Description ----------
+
+                if (dto.Description != null)
+                {
+                    role.Description =
+                        dto.Description.Trim();
+                }
+
+                var identityResult =
+                    await _roleManager.UpdateAsync(role);
+
+                var result =
+                    HandleIdentityResult(identityResult);
+
+                if (!result.Success)
+                    return result;
+
+                var newValues = new
+                {
+                    role.Name,
+                    role.Description,
+                    PermissionGroups = oldPermissionGroups
+                };
+
+                await _auditService.LogAsync(
+                    AuditActions.Update,
+                    nameof(ApplicationRole),
+                    role.Id,
+                    oldValues,
+                    newValues,
+                    cancellationToken);
+
+                return Result.Succeeded(
+                    "Role updated successfully.");
+            },
+            cancellationToken);
     }
 
     //================ DELETE =================
 
-    public async Task<Result> DeleteAsync(string id)
+    public async Task<Result> DeleteAsync(string id,
+        CancellationToken cancellationToken = default)
     {
-        return await ExecuteInTransaction(async () =>
-        {
-            var role =
-                await _roleManager.Roles
-                .FirstOrDefaultAsync(x =>
-                    x.Id == id);
-
-
-
-            if (role is null)
-                return Result.Failure(
-                    "Role not found.");
-
-
-
-            if (role.IsSystem)
-                return Result.Failure(
-                    "System roles cannot be deleted.");
-            var oldValues = new
+        return await ExecuteInTransaction(
+            async () =>
             {
-                role.Name,
-                role.Description,
+                var role =
+                    await _roleManager.Roles
+                        .FirstOrDefaultAsync(
+                            x => x.Id == id,
+                            cancellationToken);
 
-                PermissionGroups = await _context.RolePermissionGroups
-        .Where(x => x.RoleId == role.Id)
-        .Select(x => x.PermissionGroup.Key)
-        .ToListAsync()
-            };
+                if (role is null)
+                    return Result.Failure(
+                        "Role not found.");
 
+                if (role.IsSystem)
+                    return Result.Failure(
+                        "System roles cannot be deleted.");
 
-            var hasUsers =
-                await _context.UserRoles
-                .AnyAsync(x =>
-                    x.RoleId == id);
+                var permissionGroups =
+                    await _context.RolePermissionGroups
+                        .Where(x => x.RoleId == role.Id)
+                        .Select(x => x.PermissionGroup.Key)
+                        .ToListAsync(cancellationToken);
 
+                var oldValues = new
+                {
+                    role.Name,
+                    role.Description,
+                    PermissionGroups = permissionGroups
+                };
 
+                var hasUsers =
+                    await _context.UserRoles
+                        .AnyAsync(
+                            x => x.RoleId == id,
+                            cancellationToken);
 
-            if (hasUsers)
-                return Result.Failure(
-                    "Role is assigned to users.");
+                if (hasUsers)
+                    return Result.Failure(
+                        "Role is assigned to users.");
 
+                var identityResult =
+                    await _roleManager.DeleteAsync(role);
 
+                if (!identityResult.Succeeded)
+                    return HandleIdentityResult(
+                        identityResult);
 
-            var identityResult =
-                await _roleManager.DeleteAsync(role);
+                await _auditService.LogAsync(
+                    AuditActions.Delete,
+                    nameof(ApplicationRole),
+                    role.Id,
+                    oldValues,
+                    null,
+                    cancellationToken);
 
-
-
-            if (!identityResult.Succeeded)
-                return HandleIdentityResult(
-                    identityResult);
-
-            await _auditService.LogAsync(
-                AuditActions.Delete,
-                nameof(ApplicationRole),
-                role.Id,
-                oldValues,
-                null);
-
-
-            return Result.Succeeded(
-                "Role deleted successfully.");
-        });
+                return Result.Succeeded(
+                    "Role deleted successfully.");
+            },
+            cancellationToken);
     }
 
+    //================ LOOKUP =================
 
-    //================ HELPERS =================
-
-    public async Task<List<LookupDto>> GetLookupAsync()
+    public async Task<List<LookupDto>> GetLookupAsync(
+        CancellationToken cancellationToken = default)
     {
         return await _roleManager.Roles
+            .AsNoTracking()
             .OrderBy(x => x.Name)
             .Select(x => new LookupDto
             {
                 Value = x.Id,
                 Text = x.Name!
             })
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    private static Result HandleIdentityResult(IdentityResult result)
+    //================ HELPERS =================
+
+    private static Result HandleIdentityResult(
+        IdentityResult result)
     {
         if (result.Succeeded)
             return Result.Succeeded();
-
 
         return Result.Failure(
             string.Join(
                 Environment.NewLine,
                 result.Errors
-                .Select(x => x.Description)));
+                    .Select(x => x.Description)));
     }
 
-    private async Task<Result> ExecuteInTransaction(Func<Task<Result>> action)
+    private async Task<Result> ExecuteInTransaction(Func<Task<Result>> action,
+        CancellationToken cancellationToken)
     {
         var strategy =
             _context.Database
-            .CreateExecutionStrategy();
+                .CreateExecutionStrategy();
 
-
-
-        return await strategy.ExecuteAsync(async () =>
-        {
-            await using var transaction =
-                await _context.Database
-                .BeginTransactionAsync();
-
-
-
-            try
+        return await strategy.ExecuteAsync(
+            async () =>
             {
-                var result =
-                    await action();
+                await using var transaction =
+                    await _context.Database
+                        .BeginTransactionAsync(
+                            cancellationToken);
 
+                try
+                {
+                    var result = await action();
 
+                    if (!result.Success)
+                    {
+                        await transaction.RollbackAsync(
+                            cancellationToken);
 
-                if (!result.Success)
+                        return result;
+                    }
+
+                    await _context.SaveChangesAsync(
+                        cancellationToken);
+
+                    await transaction.CommitAsync(
+                        cancellationToken);
+
                     return result;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync(
+                        cancellationToken);
 
-
-
-                await _context.SaveChangesAsync();
-
-
-                await transaction.CommitAsync();
-
-
-
-                return result;
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
-        });
+                    throw;
+                }
+            });
     }
 }

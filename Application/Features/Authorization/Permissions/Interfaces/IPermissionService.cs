@@ -6,17 +6,23 @@ namespace MicroERP.Application.Features.Authorization.Permissions.Interfaces
 {
     public interface IPermissionService
     {
-        Task<Result<List<PermissionDto>>> GetAllAsync();
+        Task<Result<List<PermissionDto>>> GetAllAsync(
+            CancellationToken cancellationToken = default);
 
-        Task<Result<PermissionDto>> GetByIdAsync(int id);
+        Task<Result<PermissionDto>> GetByIdAsync(
+            int id,
+            CancellationToken cancellationToken = default);
 
-        Task<Result<List<PermissionDto>>> GetAvailablePermissionsAsync();
+        Task<Result<List<PermissionDto>>> GetAvailablePermissionsAsync(
+       int groupId,
+       CancellationToken cancellationToken = default);
 
-        Task<Result> CreateAsync(CreatePermissionDto dto);
+        Task<Result> UpdateAsync(
+            int id,
+            UpdatePermissionDto dto,
+            CancellationToken cancellationToken = default);
 
-        Task<Result> UpdateAsync(int id, UpdatePermissionDto dto);
-
-        Task<Result> DeleteAsync(int id);
-        Task<List<LookupDto>> GetLookupAsync();
+        Task<List<LookupDto>> GetLookupAsync(
+            CancellationToken cancellationToken = default);
     }
 }

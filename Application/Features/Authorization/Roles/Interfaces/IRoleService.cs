@@ -6,15 +6,26 @@ namespace MicroERP.Application.Features.Authentication.Roles.Interfaces;
 
 public interface IRoleService
 {
-    Task<Result<List<RoleDto>>> GetAllAsync();
+    Task<Result<List<RoleDto>>> GetAllAsync(
+        CancellationToken cancellationToken = default);
 
-    Task<Result<RoleDto>> GetByIdAsync(string id);
+    Task<Result<RoleDto>> GetByIdAsync(
+        string id,
+        CancellationToken cancellationToken = default);
 
-    Task<Result> CreateAsync(CreateRoleDto dto);
+    Task<Result> CreateAsync(
+        CreateRoleDto dto,
+        CancellationToken cancellationToken = default);
 
-    Task<Result> UpdateAsync(string id, UpdateRoleDto dto);
+    Task<Result> UpdateAsync(
+        string id,
+        UpdateRoleDto dto,
+        CancellationToken cancellationToken = default);
 
-    Task<Result> DeleteAsync(string id);
+    Task<Result> DeleteAsync(
+        string id,
+        CancellationToken cancellationToken = default);
 
-    Task<List<LookupDto>> GetLookupAsync();
+    Task<List<LookupDto>> GetLookupAsync(
+        CancellationToken cancellationToken = default);
 }

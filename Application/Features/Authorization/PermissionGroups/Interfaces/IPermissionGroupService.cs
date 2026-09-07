@@ -6,12 +6,43 @@ namespace MicroERP.Application.Features.Authorization.PermissionGroups.Interface
 
 public interface IPermissionGroupService
 {
-    Task<Result<List<PermissionGroupDto>>> GetAllAsync();
-    Task<Result<PermissionGroupDto>> GetByIdAsync(int id);
-    Task<Result> CreateAsync(CreatePermissionGroupDto dto);
-    Task<Result> AddPermissionsToGroupAsync(int groupId,AddPermissionsToGroupDto dto);
-    Task<Result> RemovePermissionsFromGroupAsync(int groupId,RemovePermissionsFromGroupDto dto);
-    Task<Result> UpdateAsync(int id, UpdatePermissionGroupDto dto);
-    Task<Result> DeleteAsync(int id);
-    Task<List<LookupDto>> GetLookupAsync();
+    Task<Result<List<PermissionGroupDto>>> GetAllAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<Result<PermissionGroupDto>> GetByIdAsync(
+        int id,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> CreateAsync(
+        CreatePermissionGroupDto dto,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> AddPermissionsToGroupAsync(
+        int groupId,
+        AddPermissionsToGroupDto dto,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> MovePermissionsBetweenGroupsAsync(
+      MovePermissionsBetweenGroupsDto dto,
+      CancellationToken cancellationToken = default);
+
+    Task<Result> RemovePermissionsFromGroupAsync(
+        int groupId,
+        RemovePermissionsFromGroupDto dto,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> RemoveAllPermissionsFromGroupAsync(int groupId,
+    CancellationToken cancellationToken = default);
+
+    Task<Result> UpdateAsync(
+        int id,
+        UpdatePermissionGroupDto dto,
+        CancellationToken cancellationToken = default);
+
+    Task<Result> DeleteAsync(
+        int id,
+        CancellationToken cancellationToken = default);
+
+    Task<List<LookupDto>> GetLookupAsync(
+        CancellationToken cancellationToken = default);
 }

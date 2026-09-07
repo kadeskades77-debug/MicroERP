@@ -23,25 +23,28 @@ public class PermissionsController : BaseApiController
 
     [HttpGet]
     [Authorize(Policy = RolePermissionPermissions.Permission.View)]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+        CancellationToken cancellationToken)
     {
         return HandleResult(
-            await _permissionService.GetAllAsync());
+            await _permissionService.GetAllAsync(
+                cancellationToken));
     }
 
 
-    //================ GET Available Permissions =================
+    //================ GET AVAILABLE PERMISSIONS =================
 
-    [HttpGet("available")]
+    [HttpGet("available/{groupId:int}")]
     [Authorize(Policy = RolePermissionPermissions.Permission.View)]
-    public async Task<IActionResult> GetAvailable()
+    public async Task<IActionResult> GetAvailable(
+     int groupId,
+     CancellationToken cancellationToken)
     {
-        var result = await _permissionService.GetAvailablePermissionsAsync();
-
-        if (!result.Success)
-            return BadRequest(result);
-
-        return Ok(result);
+        return HandleResult(
+            await _permissionService
+                .GetAvailablePermissionsAsync(
+                    groupId,
+                    cancellationToken));
     }
 
 
@@ -49,54 +52,42 @@ public class PermissionsController : BaseApiController
 
     [HttpGet("{id:int}")]
     [Authorize(Policy = RolePermissionPermissions.Permission.View)]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> GetById(
+        int id,
+        CancellationToken cancellationToken)
     {
         return HandleResult(
-            await _permissionService.GetByIdAsync(id));
+            await _permissionService.GetByIdAsync(
+                id,
+                cancellationToken));
     }
-
-
-
-    //================ CREATE =================
-
-    [HttpPost]
-    [Authorize(Policy = RolePermissionPermissions.Permission.Create)]
-    public async Task<IActionResult> Create(
-        CreatePermissionDto dto)
-    {
-        return HandleResult(
-            await _permissionService.CreateAsync(dto));
-    }
-
 
 
     //================ UPDATE =================
 
     [HttpPut("{id:int}")]
     [Authorize(Policy = RolePermissionPermissions.Permission.Update)]
-    public async Task<IActionResult> Update(
-        int id,
-        UpdatePermissionDto dto)
+    public async Task<IActionResult> Update(int id,
+        UpdatePermissionDto dto,
+        CancellationToken cancellationToken)
     {
         return HandleResult(
-            await _permissionService.UpdateAsync(id, dto));
+            await _permissionService.UpdateAsync(
+                id,
+                dto,
+                cancellationToken));
     }
 
 
-
-    //================ DELETE =================
-
-    [HttpDelete("{id:int}")]
-    [Authorize(Policy = RolePermissionPermissions.Permission.Delete)]
-    public async Task<IActionResult> Delete(int id)
-    {
-        return HandleResult(
-            await _permissionService.DeleteAsync(id));
-    }
+    //================ LOOKUP =================
 
     [HttpGet("lookup")]
-    public async Task<IActionResult> Lookup()
+    [Authorize(Policy = RolePermissionPermissions.Permission.View)]
+    public async Task<IActionResult> Lookup(
+        CancellationToken cancellationToken)
     {
-        return Ok(await _permissionService.GetLookupAsync());
+        return Ok(
+            await _permissionService.GetLookupAsync(
+                cancellationToken));
     }
 }

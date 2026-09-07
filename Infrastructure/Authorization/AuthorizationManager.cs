@@ -28,7 +28,6 @@ namespace MicroERP.Infrastructure.Authorization
         {
             var cacheKey = GetUserCacheKey(userId);
 
-
             if (_cache.TryGetValue(
                 cacheKey,
                 out List<string>? cachedPermissions))
@@ -36,25 +35,39 @@ namespace MicroERP.Infrastructure.Authorization
                 return cachedPermissions!;
             }
 
+            var directPermissions =
+                _context.UserPermissionAssignments
+                    .Where(x => x.UserId == userId)
+                    .SelectMany(x =>
+                        x.PermissionGroup.PermissionGroupPermissions)
+                    .Select(x => x.Permission.Key);
 
-            var permissions = await _context.UserPermissionAssignments
-                .Where(x => x.UserId == userId)
-                .SelectMany(x =>
-                    x.PermissionGroup.PermissionGroupPermissions)
-                .Select(x => x.Permission.Key)
-                .Distinct()
-                .ToListAsync();
+            var rolePermissions =
+                _context.UserRoles
+                    .Where(x => x.UserId == userId)
+                    .Join(
+                        _context.RolePermissionGroups,
+                        userRole => userRole.RoleId,
+                        roleGroup => roleGroup.RoleId,
+                        (userRole, roleGroup) => roleGroup)
+                    .SelectMany(x =>
+                        x.PermissionGroup.PermissionGroupPermissions)
+                    .Select(x => x.Permission.Key);
 
+            var permissions =
+                await directPermissions
+                    .Concat(rolePermissions)
+                    .Distinct()
+                    .ToListAsync();
 
             _cache.Set(
                 cacheKey,
                 permissions,
                 TimeSpan.FromMinutes(30));
 
-
             return permissions;
         }
-
+        
         // ================= CACHE INVALIDATION =================
         public Task ClearUserPermissionsCacheAsync(string userId)
         {
@@ -73,6 +86,18 @@ namespace MicroERP.Infrastructure.Authorization
             }
 
             await Task.CompletedTask;
+        }
+
+        public async Task ClearRoleUsersPermissionsCacheAsync(string roleId,
+        CancellationToken cancellationToken = default)
+        {
+            var userIds = await _context.UserRoles
+                .Where(x => x.RoleId == roleId)
+                .Select(x => x.UserId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            await ClearUsersPermissionsCacheAsync(userIds);
         }
 
         // ================= HELPER  =======================

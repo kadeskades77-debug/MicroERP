@@ -9,6 +9,8 @@ using MicroERP.Application.Features.Authorization.Permissions.Interfaces;
 using MicroERP.Application.Features.Authorization.Permissions.Validators;
 using MicroERP.Domain.Audit;
 using MicroERP.Domain.Identity;
+using MicroERP.Domin.Identity;
+using MicroERP.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 namespace MicroERP.Infrastructure.Services;
@@ -16,309 +18,154 @@ namespace MicroERP.Infrastructure.Services;
 public class PermissionService : IPermissionService
 {
     private readonly IApplicationDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly IAuditService _auditService;
     private readonly IAuthorizationManager _authorizationManager;
     private readonly IPermissionQueries _permissionQueries;
+    private readonly ICurrentUserService _currentUserService;
     public PermissionService(
-        IApplicationDbContext context, IAuditService auditService, IAuthorizationManager authorizationManager, IPermissionQueries permissionQueries)
+        IApplicationDbContext context, IAuditService auditService, IAuthorizationManager authorizationManager, IPermissionQueries permissionQueries, ICurrentUserService currentUserService, UserManager<ApplicationUser> userManager)
     {
         _context = context;
         _auditService = auditService;
         _authorizationManager = authorizationManager;
         _permissionQueries = permissionQueries;
+        _currentUserService = currentUserService;
+        _userManager = userManager;
     }
 
 
     //================ GET ALL =================
-    public async Task<Result<List<PermissionDto>>> GetAllAsync()
+    public async Task<Result<List<PermissionDto>>> GetAllAsync(
+        CancellationToken cancellationToken = default)
     {
-        var permissions = await _permissionQueries.GetAllAsync();
+        var permissions =
+            await _permissionQueries.GetAllAsync(
+                cancellationToken);
 
         return Result<List<PermissionDto>>
             .Succeeded(permissions);
     }
 
 
-    //================ GET Available Permissions =================
-    public async Task<Result<List<PermissionDto>>> GetAvailablePermissionsAsync()
+    //================ GET AVAILABLE PERMISSIONS =================
+    public async Task<Result<List<PermissionDto>>> GetAvailablePermissionsAsync(
+      int groupId,
+      CancellationToken cancellationToken = default)
     {
-        
-
-        var permissions = await _permissionQueries.GetAvailablePermissionsAsync();
-
+        var permissions =
+            await _permissionQueries.GetAvailablePermissionsAsync(
+                groupId,
+                cancellationToken);
 
         return Result<List<PermissionDto>>
             .Succeeded(permissions);
     }
 
     //================ GET BY ID =================
-    public async Task<Result<PermissionDto>> GetByIdAsync(int id)
+    public async Task<Result<PermissionDto>> GetByIdAsync(int id,
+        CancellationToken cancellationToken = default)
     {
-        var permission = await _permissionQueries.GetByIdAsync(id);
-        
+        var permission =
+            await _permissionQueries.GetByIdAsync(
+                id,
+                cancellationToken);
 
         if (permission is null)
+        {
             return Result<PermissionDto>
-                .Failure("Permission not found.");
-
+                .Failure(
+                    "Permission not found.");
+        }
 
         return Result<PermissionDto>
             .Succeeded(permission);
     }
 
 
-
-    //================ CREATE =================
-    public async Task<Result> CreateAsync(CreatePermissionDto dto)
-    {
-        return await ExecuteInTransaction(async () =>
-        {
-            var key = dto.Key.Trim();
-
-            var exists = await _permissionQueries.ExistsByKeyAsync(key);
-
-            if (exists)
-                return Result.Failure(
-                    "Permission key already exists.");
-
-
-            var nameExists = await _permissionQueries.ExistsByNameAsync(dto.Name.Trim());
-
-            if (nameExists)
-                return Result.Failure(
-                    "Permission name already exists.");
-
-
-            var permission = new Permission
-            {
-                Key = key,
-                Name = dto.Name.Trim(),
-                Description = dto.Description?.Trim()
-            };
-
-
-            _context.Permissions.Add(permission);
-
-            await _context.SaveChangesAsync();
-
-
-            var superAdminGroup = await _context.PermissionGroups
-            .FirstOrDefaultAsync(x => x.Key == SystemGroups.SuperAdmin);
-
-
-            if (superAdminGroup == null)
-                return Result.Failure(
-                    "SuperAdmin group not found.");
-
-
-            var groupPermission = new PermissionGroupPermission
-            {
-                PermissionGroupId = superAdminGroup.Id,
-                PermissionId = permission.Id
-            };
-
-
-            _context.PermissionGroupPermissions
-                .Add(groupPermission);
-
-
-
-            await _auditService.LogAsync(
-                AuditActions.Create,
-                nameof(Permission),
-                permission.Id.ToString(),
-                null,
-                new
-                {
-                    permission.Key,
-                    permission.Name,
-                    permission.Description
-                });
-
-
-            return Result.Succeeded(
-                "Permission created successfully.");
-        });
-    }
-
-
     //================ UPDATE =================
-    public async Task<Result> UpdateAsync(int id,UpdatePermissionDto dto)
+    public async Task<Result> UpdateAsync(int id,
+     UpdatePermissionDto dto,
+     CancellationToken cancellationToken = default)
     {
-        return await ExecuteInTransaction(async () =>
-        {
-            var permission = await _permissionQueries.GetById(id);
-
-            if (permission is null)
-                return Result.Failure(
-                    "Permission not found.");
-
-
-            var affectedUserIds = await _context.PermissionGroupPermissions
-                .Where(x => x.PermissionId == id)
-                .SelectMany(x =>
-                    _context.UserPermissionAssignments
-                        .Where(u =>
-                            u.PermissionGroupId == x.PermissionGroupId)
-                        .Select(u => u.UserId))
-                .Distinct()
-                .ToListAsync();
-
-
-            var oldValues = new
+        return await ExecuteInTransaction(
+            async () =>
             {
-                permission.Key,
-                permission.Name,
-                permission.Description
-            };
+                var isSuperAdmin =
+                    await IsCurrentUserSuperAdminAsync();
 
-
-            if (!string.IsNullOrWhiteSpace(dto.Name))
-            {
-                var name = dto.Name.Trim();
-
-                var nameExists =await _permissionQueries.ExistsByNameAsync(name,id);
-
-                if (nameExists)
+                if (!isSuperAdmin)
+                {
                     return Result.Failure(
-                        "Permission name already exists.");
-
-                permission.Name = name;
-            }
-
-
-            if (dto.Description != null)
-            {
-                permission.Description =
-                    dto.Description.Trim();
-            }
-
-
-            await _auditService.LogAsync(
-                AuditActions.Update,
-                nameof(Permission),
-                permission.Id.ToString(),
-                oldValues,
-                new
-                {
-                    permission.Key,
-                    permission.Name,
-                    permission.Description
-                });
-
-
-            if (affectedUserIds.Any())
-            {
-                await _authorizationManager
-                    .ClearUsersPermissionsCacheAsync(
-                        affectedUserIds);
-            }
-
-
-            return Result.Succeeded(
-                "Permission updated successfully.");
-        });
-    }
-
-    //================ DELETE =================
-    public async Task<Result> DeleteAsync(int id)
-    {
-        return await ExecuteInTransaction(async () =>
-        {
-            var permission = await _permissionQueries.GetById(id);
-
-            if (permission is null)
-                return Result.Failure(
-                    "Permission not found.");
-
-
-            var affectedUserIds = await _context.PermissionGroupPermissions
-                .Where(x => x.PermissionId == id)
-                .SelectMany(x =>
-                    _context.UserPermissionAssignments
-                        .Where(u =>
-                            u.PermissionGroupId == x.PermissionGroupId)
-                        .Select(u => u.UserId))
-                .Distinct()
-                .ToListAsync();
-
-
-            var oldValues = new
-            {
-                permission.Key,
-                permission.Name,
-                permission.Description
-            };
-
-
-            permission.IsDeleted = true;
-
-
-            await _auditService.LogAsync(
-                AuditActions.Delete,
-                nameof(Permission),
-                permission.Id.ToString(),
-                oldValues,
-                null);
-
-
-            if (affectedUserIds.Any())
-            {
-                await _authorizationManager
-                    .ClearUsersPermissionsCacheAsync(affectedUserIds);
-            }
-
-
-            return Result.Succeeded(
-                "Permission deleted successfully.");
-        });
-    }
-
-
-    //================ HELPERS =================
-
-    private async Task<Result> ExecuteInTransaction(
-        Func<Task<Result>> action)
-    {
-        var strategy =
-            _context.Database.CreateExecutionStrategy();
-
-
-        return await strategy.ExecuteAsync(async () =>
-        {
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync();
-
-
-            try
-            {
-                var result = await action();
-
-
-                if (!result.Success)
-                {
-                    await transaction.RollbackAsync();
-                    return result;
+                        "Only SuperAdmin can update permissions.");
                 }
 
+                var permission =
+                    await _permissionQueries.GetById(
+                        id,
+                        cancellationToken);
 
-                await _context.SaveChangesAsync();
+                if (permission is null)
+                {
+                    return Result.Failure(
+                        "Permission not found.");
+                }
 
+                var oldValues = new
+                {
+                    permission.Key,
+                    permission.Name,
+                    permission.Description
+                };
 
-                await transaction.CommitAsync();
+                if (!string.IsNullOrWhiteSpace(dto.Name))
+                {
+                    var name = dto.Name.Trim();
 
+                    var nameExists =
+                        await _permissionQueries
+                            .ExistsByNameAsync(
+                                name,
+                                id,
+                                cancellationToken);
 
-                return result;
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
-        });
+                    if (nameExists)
+                    {
+                        return Result.Failure(
+                            "Permission name already exists.");
+                    }
+
+                    permission.Name = name;
+                }
+
+                if (dto.Description != null)
+                {
+                    permission.Description =
+                        dto.Description.Trim();
+                }
+
+                await _auditService.LogAsync(
+                    AuditActions.Update,
+                    nameof(Permission),
+                    permission.Id.ToString(),
+                    oldValues,
+                    new
+                    {
+                        permission.Key,
+                        permission.Name,
+                        permission.Description
+                    },
+                    cancellationToken);
+
+                return Result.Succeeded(
+                    "Permission updated successfully.");
+            },
+            cancellationToken);
     }
 
-    public async Task<List<LookupDto>> GetLookupAsync()
+    //================ Get Lookup =================
+    public async Task<List<LookupDto>> GetLookupAsync(
+     CancellationToken cancellationToken = default)
     {
         return await _context.Permissions
             .AsNoTracking()
@@ -328,7 +175,67 @@ public class PermissionService : IPermissionService
                 Value = x.Key,
                 Text = x.Name
             })
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
+
+
+    //================ HELPERS =================
+
+    private async Task<Result> ExecuteInTransaction(
+     Func<Task<Result>> action,
+     CancellationToken cancellationToken = default)
+    {
+        var strategy =
+            _context.Database.CreateExecutionStrategy();
+
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync(
+                    cancellationToken);
+
+            try
+            {
+                var result = await action();
+
+                if (!result.Success)
+                {
+                    await transaction.RollbackAsync(
+                        cancellationToken);
+
+                    return result;
+                }
+
+                await _context.SaveChangesAsync(
+                    cancellationToken);
+
+                await transaction.CommitAsync(
+                    cancellationToken);
+
+                return result;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(
+                    cancellationToken);
+
+                throw;
+            }
+        });
+    }
+
+    private async Task<bool> IsCurrentUserSuperAdminAsync()
+    {
+        var userId = _currentUserService.UserId;
+
+        if (string.IsNullOrWhiteSpace(userId))
+            return false;
+
+        return await _userManager.IsInRoleAsync(
+            new ApplicationUser { Id = userId },
+            SystemRoles.SuperAdmin);
+    }
+
+   
 
 }

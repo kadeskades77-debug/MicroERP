@@ -20,4 +20,7 @@ public interface IUserPermissionAssignmentService
     Task<Result> RemovePermissionGroupFromUserAsync(
         RemoveUserPermissionGroupDto dto,
         CancellationToken cancellationToken = default);
+    Task<Result> RemoveAllOptionalPermissionGroupsAsync(
+    string userId,
+    CancellationToken cancellationToken = default);
 }

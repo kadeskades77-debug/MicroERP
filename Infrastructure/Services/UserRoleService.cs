@@ -38,154 +38,175 @@ public class UserRoleService : IUserRoleService
 
     //================ GET USER ROLES =================
 
-    public async Task<Result<List<UserRoleDto>>> GetUserRolesAsync(string userId)
+    public async Task<Result<List<UserRoleDto>>> GetUserRolesAsync(string userId,
+        CancellationToken cancellationToken = default)
     {
-        var user = await _userManager.FindByIdAsync(userId);
+        var userExists = await _userManager.Users
+            .AnyAsync(
+                x => x.Id == userId,
+                cancellationToken);
 
-        if (user is null)
+        if (!userExists)
             return Result<List<UserRoleDto>>
                 .Failure("User not found.");
 
-
-        var roles = await _userManager.GetRolesAsync(user);
-
-
-        var result = await _roleManager.Roles
-            .Where(x => roles.Contains(x.Name!))
-            .Select(x => new UserRoleDto
-            {
-                Id = x.Id,
-                Name = x.Name!
-            })
-            .ToListAsync();
-
+        var roles = await _context.UserRoles
+            .Where(x => x.UserId == userId)
+            .Join(
+                _roleManager.Roles,
+                userRole => userRole.RoleId,
+                role => role.Id,
+                (userRole, role) => new UserRoleDto
+                {
+                    Id = role.Id,
+                    Name = role.Name!
+                })
+            .OrderBy(x => x.Name)
+            .ToListAsync(cancellationToken);
 
         return Result<List<UserRoleDto>>
-            .Succeeded(result);
+            .Succeeded(roles);
     }
-
 
 
     //================ AVAILABLE ROLES =================
 
-    public async Task<Result<List<RoleLookupDto>>> GetAvailableRolesAsync()
+    public async Task<Result<List<RoleLookupDto>>> GetAvailableRolesAsync(
+        CancellationToken cancellationToken = default)
     {
-        var roles = await _roleManager.Roles
+        var roles = await _context.Roles
+            .AsNoTracking()
             .OrderBy(x => x.Name)
             .Select(x => new RoleLookupDto
             {
                 Id = x.Id,
                 Name = x.Name!
             })
-            .ToListAsync();
-
+            .ToListAsync(cancellationToken);
 
         return Result<List<RoleLookupDto>>
             .Succeeded(roles);
     }
 
 
-
     //================ ASSIGN =================
 
-    public async Task<Result> AssignRolesAsync(string userId,AssignUserRolesDto dto)
+    public async Task<Result> AssignRolesAsync(string userId,
+        AssignUserRolesDto dto,
+        CancellationToken cancellationToken = default)
     {
         var user = await _userManager.FindByIdAsync(userId);
 
         if (user is null)
             return Result.Failure("User not found.");
 
+        var roleIds = dto.RoleIds
+            .Distinct()
+            .ToList();
 
-        var roles = await GetRolesAsync(dto.RoleIds);
-        var oldRoles = await _userManager.GetRolesAsync(user);
+        if (roleIds.Count == 0)
+            return Result.Failure("At least one role is required.");
 
-        foreach (var role in roles)
-        {
-            if (!await _userManager.IsInRoleAsync(
-                    user,
-                    role.Name!))
-            {
-                var result =
-                    await _userManager.AddToRoleAsync(
-                        user,
-                        role.Name!);
+        var roles = await _roleManager.Roles
+            .Where(x => roleIds.Contains(x.Id))
+            .ToListAsync(cancellationToken);
 
+        if (roles.Count != roleIds.Count)
+            return Result.Failure("One or more roles are invalid.");
 
-                if (!result.Succeeded)
-                    return HandleIdentityResult(result);
-            }
-        }
+        var oldRoleNames =
+            await _userManager.GetRolesAsync(user);
+
+        var currentRoleNames =
+            oldRoleNames.ToHashSet(
+                StringComparer.OrdinalIgnoreCase);
+
+        var rolesToAdd = roles
+            .Where(x =>
+                !currentRoleNames.Contains(x.Name!))
+            .ToList();
+
+        if (rolesToAdd.Count == 0)
+            return Result.Succeeded(
+                "User already has the specified roles.");
+
+        var roleNamesToAdd = rolesToAdd
+            .Select(x => x.Name!)
+            .ToList();
+
+        var result =
+            await _userManager.AddToRolesAsync(
+                user,
+                roleNamesToAdd);
+
+        if (!result.Succeeded)
+            return HandleIdentityResult(result);
+
+        var newRoleNames =
+            await _userManager.GetRolesAsync(user);
+
         await _auditService.LogAsync(
             AuditActions.AssignRole,
             nameof(ApplicationUser),
             user.Id,
             new
             {
-                Roles = oldRoles
+                Roles = oldRoleNames
             },
             new
             {
-                Roles = roles
-            });
+                Roles = newRoleNames
+            },
+            cancellationToken);
 
         await _authorizationManager
             .ClearUserPermissionsCacheAsync(userId);
-        await _context.SaveChangesAsync();
 
         return Result.Succeeded(
             "Roles assigned successfully.");
     }
-
     //================ REPLACE =================
 
-    public async Task<Result> ReplaceRolesAsync( UpdateUserRolesDto dto)
+    public async Task<Result> ReplaceRolesAsync(
+        UpdateUserRolesDto dto,
+        CancellationToken cancellationToken = default)
     {
         var user = await _userManager.FindByIdAsync(dto.UserId);
 
         if (user is null)
             return Result.Failure("User not found.");
 
-
         var requestedRoleIds = dto.RoleIds
             .Distinct()
             .ToList();
 
-
         var roles = await _roleManager.Roles
             .Where(x => requestedRoleIds.Contains(x.Id))
-            .ToListAsync();
-        var oldRoles = await _userManager.GetRolesAsync(user);
+            .ToListAsync(cancellationToken);
 
         if (roles.Count != requestedRoleIds.Count)
             return Result.Failure(
                 "One or more roles are invalid.");
 
+        var oldRoleNames =
+            await _userManager.GetRolesAsync(user);
 
-
-        var currentRoleNames = await _userManager
-            .GetRolesAsync(user);
-
-
+        var currentRoleNames =
+            oldRoleNames.ToHashSet(
+                StringComparer.OrdinalIgnoreCase);
 
         var requestedRoleNames = roles
             .Select(x => x.Name!)
-            .ToList();
+            .ToHashSet(
+                StringComparer.OrdinalIgnoreCase);
 
-
-
-        // Roles to remove
         var rolesToRemove = currentRoleNames
             .Except(requestedRoleNames)
             .ToList();
 
-
-
-        // Roles to add
         var rolesToAdd = requestedRoleNames
             .Except(currentRoleNames)
             .ToList();
-
-
 
         if (rolesToRemove.Count > 0)
         {
@@ -194,12 +215,9 @@ public class UserRoleService : IUserRoleService
                     user,
                     rolesToRemove);
 
-
             if (!removeResult.Succeeded)
                 return HandleIdentityResult(removeResult);
         }
-
-
 
         if (rolesToAdd.Count > 0)
         {
@@ -208,98 +226,113 @@ public class UserRoleService : IUserRoleService
                     user,
                     rolesToAdd);
 
-
             if (!addResult.Succeeded)
                 return HandleIdentityResult(addResult);
         }
-        var newRoles = await _userManager.GetRolesAsync(user);
 
+        var newRoleNames =
+            await _userManager.GetRolesAsync(user);
 
         await _authorizationManager
             .ClearUserPermissionsCacheAsync(dto.UserId);
-               await _auditService.LogAsync(
-           AuditActions.ReplaceRole,
-           nameof(ApplicationUser),
-           user.Id,
-           new
-           {
-               Roles = oldRoles
-           },
-           new
-           {
-               Roles = newRoles
-           });
 
-        await _context.SaveChangesAsync();
+        await _auditService.LogAsync(
+            AuditActions.ReplaceRole,
+            nameof(ApplicationUser),
+            user.Id,
+            new
+            {
+                Roles = oldRoleNames
+            },
+            new
+            {
+                Roles = newRoleNames
+            },
+            cancellationToken);
+
         return Result.Succeeded(
             "User roles updated successfully.");
+    }
 
-    }   
     //================ REMOVE =================
 
-    public async Task<Result> RemoveRolesAsync(string userId,AssignUserRolesDto dto)
+    public async Task<Result> RemoveRolesAsync(
+        string userId,
+        AssignUserRolesDto dto,
+        CancellationToken cancellationToken = default)
     {
         var user = await _userManager.FindByIdAsync(userId);
 
         if (user is null)
             return Result.Failure("User not found.");
 
+        var roleIds = dto.RoleIds
+            .Distinct()
+            .ToList();
 
-        var roles = await GetRolesAsync(dto.RoleIds);
-        var oldRoles = await _userManager.GetRolesAsync(user);
+        if (roleIds.Count == 0)
+            return Result.Failure("At least one role is required.");
 
-        foreach (var role in roles)
-        {
-            if (await _userManager.IsInRoleAsync(
-                    user,
-                    role.Name!))
+        var roles = await _roleManager.Roles
+            .Where(x => roleIds.Contains(x.Id))
+            .ToListAsync(cancellationToken);
+
+        if (roles.Count != roleIds.Count)
+            return Result.Failure(
+                "One or more roles are invalid.");
+
+        var oldRoleNames =
+            await _userManager.GetRolesAsync(user);
+
+        var currentRoleNames =
+            oldRoleNames.ToHashSet(
+                StringComparer.OrdinalIgnoreCase);
+
+        var rolesToRemove = roles
+            .Where(x =>
+                currentRoleNames.Contains(x.Name!))
+            .Select(x => x.Name!)
+            .ToList();
+
+        if (rolesToRemove.Count == 0)
+            return Result.Succeeded(
+                "User does not have the specified roles.");
+
+        var result =
+            await _userManager.RemoveFromRolesAsync(
+                user,
+                rolesToRemove);
+
+        if (!result.Succeeded)
+            return HandleIdentityResult(result);
+
+        var newRoleNames =
+            await _userManager.GetRolesAsync(user);
+
+        await _auditService.LogAsync(
+            AuditActions.DeleteUserRole,
+            nameof(ApplicationUser),
+            user.Id,
+            new
             {
-                var result =
-                    await _userManager.RemoveFromRoleAsync(
-                        user,
-                        role.Name!);
-
-
-                if (!result.Succeeded)
-                    return HandleIdentityResult(result);
-            }
-        }
-
+                Roles = oldRoleNames
+            },
+            new
+            {
+                Roles = newRoleNames
+            },
+            cancellationToken);
 
         await _authorizationManager
             .ClearUserPermissionsCacheAsync(userId);
-        await _auditService.LogAsync(
-              AuditActions.DeleteUserRole,
-              nameof(ApplicationUser),
-              user.Id,
-              new
-              {
-                  Roles = oldRoles
-              },
-              null);
-        await _context.SaveChangesAsync();
+
         return Result.Succeeded(
             "Roles removed successfully.");
     }
 
 
-
     //================ HELPERS =================
 
-    private async Task<List<ApplicationRole>> GetRolesAsync(IEnumerable<string> roleIds)
-    {
-        var roles = await _roleManager.Roles
-            .Where(x => roleIds.Contains(x.Id))
-            .ToListAsync();
-
-
-        if (roles.Count != roleIds.Count())
-            throw new InvalidOperationException(
-                "One or more roles are invalid.");
-
-
-        return roles;
-    }
 
     private static Result HandleIdentityResult(IdentityResult result)
     {

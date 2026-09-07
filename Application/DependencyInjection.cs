@@ -6,6 +6,8 @@ using MicroERP.Application.Common.Excel.Interfaces;
 using MicroERP.Application.Common.Excel.Services;
 using MicroERP.Application.Common.Files;
 using MicroERP.Application.Common.Files.Interfaces;
+using MicroERP.Application.Features.Authorization.RolePermissionGroup.Interfaces;
+using MicroERP.Application.Features.Authorization.RolePermissionGroup.Services;
 using MicroERP.Application.Features.Departments.Interfaces;
 using MicroERP.Application.Features.Departments.Services;
 using MicroERP.Application.Features.Documents.EmployeeDocuments.Interfaces;
@@ -68,6 +70,7 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         services.AddScoped<IPermissionDefinitionService,PermissionDefinitionService>();
         services.AddScoped<IMultiPermissionDefinitionProvider, TicketDefinitionProvider>();
+        services.AddScoped<IRolePermissionGroupService,RolePermissionGroupService>();
 
 
         #region Employees

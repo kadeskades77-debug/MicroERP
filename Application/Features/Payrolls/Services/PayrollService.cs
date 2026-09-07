@@ -1419,68 +1419,82 @@ namespace MicroERP.Application.Features.Payrolls.Services
             }
         }
 
-        public async Task<Result<bool>> ClosePeriodAsync(int periodId,
-          CancellationToken cancellationToken)
+        public async Task<Result<bool>> ClosePeriodAsync(
+            int periodId,
+            CancellationToken cancellationToken = default)
         {
-            var period =
-                await _context.PayrollPeriods
-                .FirstOrDefaultAsync(
-                    x => x.Id == periodId,
-                    cancellationToken);
+            return await ExecuteInTransaction(
+                async () =>
+                {
+                    var period =
+                        await _context.PayrollPeriods
+                            .FirstOrDefaultAsync(
+                                x => x.Id == periodId,
+                                cancellationToken);
 
+                    if (period is null)
+                        return Result<bool>.Failure(
+                            "Payroll period not found.");
 
-            if (period == null)
-                return Result<bool>.Failure(
-                    "Payroll period not found");
+                    if (period.Status == PayrollPeriodStatus.Closed)
+                        return Result<bool>.Failure(
+                            "Payroll period already closed.");
 
+                    var payrollCount =
+                        await _context.Payrolls
+                            .CountAsync(
+                                x => x.PayrollPeriodId == periodId,
+                                cancellationToken);
 
-            if (period.Status == PayrollPeriodStatus.Closed)
-                return Result<bool>.Failure(
-                    "Payroll period already closed");
+                    if (payrollCount == 0)
+                        return Result<bool>.Failure(
+                            "Cannot close payroll period without payrolls.");
 
+                    var allPaid =
+                        await _context.Payrolls
+                            .Where(x =>
+                                x.PayrollPeriodId == periodId)
+                            .AllAsync(
+                                x =>
+                                    x.Status == PayrollStatus.Paid,
+                                cancellationToken);
 
-            var allPaid =
-                await _context.Payrolls
-                .Where(x =>
-                    x.PayrollPeriodId == periodId)
-                .AllAsync(
-                    x => x.Status == PayrollStatus.Paid,
-                    cancellationToken);
+                    if (!allPaid)
+                        return Result<bool>.Failure(
+                            "All payrolls must be paid before closing period.");
 
+                    var oldValues = new
+                    {
+                        Status = period.Status,
+                        ClosedOn = period.ClosedOn
+                    };
 
-            if (!allPaid)
-                return Result<bool>.Failure(
-                    "All payrolls must be paid before closing period");
-            var oldValues = new
-            {
-                Status = period.Status
-            };
+                    period.Status =
+                        PayrollPeriodStatus.Closed;
 
-            period.Status =
-                PayrollPeriodStatus.Closed;
+                    period.ClosedOn =
+                        DateTime.UtcNow;
 
-            period.ClosedOn = DateTime.Now;
+                    var newValues = new
+                    {
+                        Status = period.Status,
+                        ClosedOn = period.ClosedOn
+                    };
 
-            var newValues = new
-            {
-                Status = period.Status
-            };
-            await _context.SaveChangesAsync(
-               cancellationToken);
+                    await _auditService.LogAsync(
+                        "Close",
+                        nameof(PayrollPeriod),
+                        period.Id.ToString(),
+                        oldValues,
+                        newValues,
+                        cancellationToken: cancellationToken);
 
-            await _auditService.LogAsync(
-                "Close",
-                "PayrollPeriod",
-                period.Id.ToString(),
-                oldValues,
-                newValues);
-
-           
-
-
-            return Result<bool>.Succeeded(true, "Closeed is Done");
+                    return Result<bool>.Succeeded(
+                        true,
+                        "Payroll period closed successfully.");
+                },
+                cancellationToken);
         }
-
         //============= Helpers =================
 
 
@@ -1502,6 +1516,51 @@ namespace MicroERP.Application.Features.Payrolls.Services
                         x.EffectiveTo >= startDate
                     ))
                 .ToListAsync(cancellationToken);
+        }
+
+        private async Task<Result<bool>> ExecuteInTransaction(
+    Func<Task<Result<bool>>> action,
+    CancellationToken cancellationToken)
+        {
+            var strategy =
+                _context.Database.CreateExecutionStrategy();
+
+            return await strategy.ExecuteAsync(
+                async () =>
+                {
+                    await using var transaction =
+                        await _context.Database
+                            .BeginTransactionAsync(
+                                cancellationToken);
+
+                    try
+                    {
+                        var result = await action();
+
+                        if (!result.Success)
+                        {
+                            await transaction.RollbackAsync(
+                                cancellationToken);
+
+                            return result;
+                        }
+
+                        await _context.SaveChangesAsync(
+                            cancellationToken);
+
+                        await transaction.CommitAsync(
+                            cancellationToken);
+
+                        return result;
+                    }
+                    catch
+                    {
+                        await transaction.RollbackAsync(
+                            cancellationToken);
+
+                        throw;
+                    }
+                });
         }
 
         private async Task ApplyAttendanceAsync(

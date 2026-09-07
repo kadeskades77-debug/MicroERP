@@ -4,20 +4,24 @@ namespace MicroERP.Application.Features.Authorization.Permissions.Interfaces
 {
     public interface IPermissionQueries
     {
-        Task<Permission?> GetById(int id);
-        Task<PermissionDto>GetByIdAsync(int id);
-        Task<List<PermissionDto>> GetAllAsync();
-        Task<List<PermissionDto>> GetAvailablePermissionsAsync();
-        Task<Permission?> GetByKeyAsync(string key);
+        Task<Permission?> GetById(
+            int id,
+            CancellationToken cancellationToken = default);
 
-        Task<List<Permission>> GetByKeysAsync(IEnumerable<string> keys);
+        Task<PermissionDto?> GetByIdAsync(
+            int id,
+            CancellationToken cancellationToken = default);
 
-        Task<bool> ExistsByKeyAsync(string key);
+        Task<List<PermissionDto>> GetAllAsync(
+            CancellationToken cancellationToken = default);
 
-        Task<bool> ExistsByKeyAsync(string key, int excludeId);
+        Task<List<PermissionDto>> GetAvailablePermissionsAsync(
+      int groupId,
+      CancellationToken cancellationToken = default);
 
-        Task<bool> ExistsByNameAsync(string name);
-
-        Task<bool> ExistsByNameAsync(string name, int excludeId);
+        Task<bool> ExistsByNameAsync(
+            string name,
+            int excludeId,
+            CancellationToken cancellationToken = default);
     }
 }

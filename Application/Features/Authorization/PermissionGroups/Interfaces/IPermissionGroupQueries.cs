@@ -5,24 +5,33 @@ namespace MicroERP.Application.Features.Authorization.PermissionGroups.Interface
 {
     public interface IPermissionGroupQueries
     {
-        Task<PermissionGroup?> GetById(int id);
+        Task<PermissionGroup?> GetById(
+            int id,
+            CancellationToken cancellationToken = default);
 
-        Task<PermissionGroupDto> GetByIdAsync(int id);
+        Task<PermissionGroupDto> GetByIdAsync(
+            int id,
+            CancellationToken cancellationToken = default);
 
-        Task<List<PermissionGroupDto>> GetAllAsync();
+        Task<List<PermissionGroupDto>> GetAllAsync(
+            CancellationToken cancellationToken = default);
 
-        Task<PermissionGroup?> GetByKeyAsync(string key);
+        Task<bool> ExistsByKeyAsync(
+            string key,
+            CancellationToken cancellationToken = default);
 
-        Task<PermissionGroup?> GetByNameAsync(string name);
+        Task<bool> ExistsByKeyAsync(
+            string key,
+            int excludeId,
+            CancellationToken cancellationToken = default);
 
-        Task<PermissionGroup?> GetByIdWithPermissionsAsync(int id);
+        Task<bool> ExistsByNameAsync(
+            string name,
+            CancellationToken cancellationToken = default);
 
-        Task<bool> ExistsByKeyAsync(string key);
-
-        Task<bool> ExistsByKeyAsync(string key, int excludeId);
-
-        Task<bool> ExistsByNameAsync(string name);
-
-        Task<bool> ExistsByNameAsync(string name, int excludeId);
+        Task<bool> ExistsByNameAsync(
+            string name,
+            int excludeId,
+            CancellationToken cancellationToken = default);
     }
 }
