@@ -21,9 +21,13 @@ namespace MicroERP.Persistence.Configurations
 
             builder.HasIndex(x => x.NameAr)
                 .IsUnique();
+            builder.HasIndex(x => x.NameEn)
+                .IsUnique();
+
 
             builder.Property(x => x.NameEn)
-                .HasMaxLength(200);
+                .HasMaxLength(200)
+                .IsRequired();
 
             builder.Property(x => x.IsActive)
                 .HasDefaultValue(true);

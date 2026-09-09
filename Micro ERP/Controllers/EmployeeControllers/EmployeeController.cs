@@ -27,10 +27,11 @@ public class EmployeeController : BaseApiController
 
     [HttpGet]
     [Authorize(Policy = HRPermissions.Employee.View)]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+        [FromQuery] EmployeeFilterDto? filter = null)
     {
         var result =
-            await _employeeService.GetAllAsync();
+            await _employeeService.GetAllAsync(filter);
 
         return HandleResult(result);
     }
@@ -189,22 +190,6 @@ public class EmployeeController : BaseApiController
     }
 
 
-    // =========================================================
-    // Activate Employee
-    // =========================================================
-
-    [HttpPatch("{id:int}/activate")]
-    [Authorize(Policy = HRPermissions.Employee.Update)]
-    public async Task<IActionResult> Activate(int id,
-        CancellationToken cancellationToken)
-    {
-        var result =
-            await _employeeService.ActivateAsync(
-                id,
-                cancellationToken);
-
-        return HandleResult(result);
-    }
 
 
     // =========================================================
@@ -228,22 +213,6 @@ public class EmployeeController : BaseApiController
         return HandleResult(result);
     }
 
-    // =========================================================
-    // Deactivate Employee
-    // =========================================================
-
-    [HttpPatch("{id:int}/deactivate")]
-    [Authorize(Policy = HRPermissions.Employee.Update)]
-    public async Task<IActionResult> Deactivate(int id,
-        CancellationToken cancellationToken)
-    {
-        var result =
-            await _employeeService.DeactivateAsync(
-                id,
-                cancellationToken);
-
-        return HandleResult(result);
-    }
 
 
     // =========================================================

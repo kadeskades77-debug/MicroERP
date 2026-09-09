@@ -1,4 +1,6 @@
 ﻿
+using MicroERP.Domin.Enums;
+
 namespace MicroERP.Application.Features.Employees.DTOs
 {
     public class EmployeeDto
@@ -25,6 +27,6 @@ namespace MicroERP.Application.Features.Employees.DTOs
 
         public string? PositionName { get; set; }
 
-        public bool IsActive { get; set; }
+        public EmployeeStatus Status { get; set; }
     }
 }

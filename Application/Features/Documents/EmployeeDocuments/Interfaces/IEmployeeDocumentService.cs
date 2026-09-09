@@ -1,4 +1,4 @@
-﻿using MicroERP.Application.Common;
+﻿
 using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.Documents.EmployeeDocuments.DTOs;
 
@@ -13,14 +13,16 @@ public interface IEmployeeDocumentService
 
 
     Task<Result<EmployeeDocumentDto>> UpdateAsync(
-        int id,
-        UpdateEmployeeDocumentDto dto,
-        CancellationToken cancellationToken = default);
+     int employeeId,
+     int id,
+     UpdateEmployeeDocumentDto dto,
+     CancellationToken cancellationToken = default);
 
 
     Task<Result> DeleteAsync(
-        int id,
-        CancellationToken cancellationToken = default);
+    int employeeId,
+    int id,
+    CancellationToken cancellationToken = default);
 
     Task<Result> DeleteByEmployeeAsync(
     int employeeId,

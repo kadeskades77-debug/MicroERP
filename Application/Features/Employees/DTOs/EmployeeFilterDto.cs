@@ -1,8 +1,12 @@
 ﻿
 
+using MicroERP.Domin.Enums;
+
 namespace MicroERP.Application.Features.Employees.DTOs
 {
-    internal class EmployeeFilterDto
+    public class EmployeeFilterDto
     {
+        public string? Search { get; set; }
+        public EmployeeSearchBy SearchBy { get; set; } = EmployeeSearchBy.Name;
     }
 }

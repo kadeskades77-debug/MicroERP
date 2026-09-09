@@ -25,13 +25,13 @@ public static class EmployeeMappings
             PositionCode = employee.Position?.Code,
             PositionName = employee.Position?.NameEn,
 
-            IsActive = employee.IsActive
+            Status = employee.Status
         };
     }
 
 
     public static EmployeeListDto ToListDto(
-        this Employee employee)
+      this Employee employee)
     {
         return new EmployeeListDto
         {
@@ -51,7 +51,8 @@ public static class EmployeeMappings
             PositionCode = employee.Position?.Code,
             PositionName = employee.Position?.NameAr,
 
-            IsActive = employee.IsActive
+
+            Status = employee.Status
         };
     }
 }

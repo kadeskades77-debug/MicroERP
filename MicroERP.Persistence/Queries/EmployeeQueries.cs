@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
-using MicroERP.Application.Common.Interfaces;
-using MicroERP.Application.Features.Employees.Interfaces;
-using MicroERP.Application.Features.Employees.DTOs;
+﻿using MicroERP.Application.Common.Interfaces;
 using MicroERP.Application.Common.Mappings;
+using MicroERP.Application.Features.Employees.DTOs;
+using MicroERP.Application.Features.Employees.Interfaces;
 using MicroERP.Domin.Entities.Employees;
+using MicroERP.Domin.Enums;
+using Microsoft.EntityFrameworkCore;
 namespace MicroERP.Persistence.Queries;
 
 public class EmployeeQueries : IEmployeeQueries
@@ -16,12 +17,48 @@ public class EmployeeQueries : IEmployeeQueries
     }
 
 
-    public async Task<List<EmployeeListDto>> GetAllAsync()
+    public async Task<List<EmployeeListDto>> GetAllAsync(
+     EmployeeFilterDto? filter = null)
     {
-        var employees = await _context.Employees
-            .Include(x => x.User)
-            .Include(x => x.Department)
-            .ToListAsync();
+        IQueryable<Employee> query =
+            _context.Employees
+                .Include(x => x.User)
+                .Include(x => x.Department);
+
+        if (!string.IsNullOrWhiteSpace(filter?.Search))
+        {
+            var search = filter.Search.Trim();
+
+            query = filter.SearchBy switch
+            {
+                EmployeeSearchBy.Name =>
+                    query.Where(x =>
+                        x.User.FullName.StartsWith(search)),
+
+                EmployeeSearchBy.Email =>
+                    query.Where(x =>
+                        x.User.Email != null &&
+                        x.User.Email.Contains(search)),
+
+                EmployeeSearchBy.Username =>
+                    query.Where(x =>
+                        x.User.UserName != null &&
+                        x.User.UserName.Contains(search)),
+
+                EmployeeSearchBy.Phone =>
+                    query.Where(x =>
+                        x.Phone.Contains(search)),
+
+                EmployeeSearchBy.Department =>
+                    query.Where(x =>
+                        x.Department.NameAr.Contains(search) ||
+                        x.Department.NameEn.Contains(search)),
+
+                _ => query
+            };
+        }
+
+        var employees = await query.ToListAsync();
 
         return employees
             .Select(x => x.ToListDto())

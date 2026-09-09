@@ -213,9 +213,10 @@ namespace MicroERP.Application.Features.Employees.Services
             }
         }
 
-        public async Task<Result<List<EmployeeListDto>>> GetAllAsync()
+        public async Task<Result<List<EmployeeListDto>>> GetAllAsync(
+            EmployeeFilterDto? filter = null)
         {
-            var data = await _employeeQueries.GetAllAsync();
+            var data = await _employeeQueries.GetAllAsync(filter);
 
             return Result<List<EmployeeListDto>>.Succeeded(data);
         }
@@ -750,93 +751,11 @@ namespace MicroERP.Application.Features.Employees.Services
             }
         }
       
-      
-       public async Task<Result> ActivateAsync(int id,
-       CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var employee =
-                    await _employeeQueries.GetByIdAsync(id);
 
-                if (employee is null)
-                    return Result.Failure(
-                        "Employee not found.");
-
-                if (employee.IsActive)
-                    return Result.Failure(
-                        "Employee is already active.");
-
-                var result =
-                    await _authService.ActivateUserAsync(
-                        employee.UserId);
-
-                if (!result.Success)
-                    return Result.Failure(
-                        string.IsNullOrWhiteSpace(result.Message)
-                            ? "Failed to activate the employee user."
-                            : result.Message);
-
-                employee.IsActive = true;
-
-                await _context.SaveChangesAsync(
-                    cancellationToken);
-
-                return Result.Succeeded(
-                    "Employee activated successfully.");
-            }
-            catch (Exception)
-            {
-                return Result.Failure(
-                    "An unexpected error occurred.");
-            }
-        }
-      
-      
-       public async Task<Result> DeactivateAsync(int id,
-       CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var employee =
-                    await _employeeQueries.GetByIdAsync(id);
-
-                if (employee is null)
-                    return Result.Failure(
-                        "Employee not found.");
-
-                if (!employee.IsActive)
-                    return Result.Failure(
-                        "Employee is already inactive.");
-
-                var result =
-                    await _authService.DeactivateUserAsync(
-                        employee.UserId);
-
-                if (!result.Success)
-                    return Result.Failure(
-                        string.IsNullOrWhiteSpace(result.Message)
-                            ? "Failed to deactivate the employee user."
-                            : result.Message);
-
-                employee.IsActive = false;
-
-                await _context.SaveChangesAsync(
-                    cancellationToken);
-
-                return Result.Succeeded(
-                    "Employee deactivated successfully.");
-            }
-            catch (Exception)
-            {
-                return Result.Failure(
-                    "An unexpected error occurred.");
-            }
-        }
-
-        public async Task<Result> ChangeStatusAsync(int id,
-         ChangeEmployeeStatusDto dto,
-         CancellationToken cancellationToken = default)
+        public async Task<Result> ChangeStatusAsync(
+        int id,
+        ChangeEmployeeStatusDto dto,
+        CancellationToken cancellationToken = default)
         {
             try
             {
@@ -891,6 +810,28 @@ namespace MicroERP.Application.Features.Employees.Services
                 {
                     employee.Status = EmployeeStatus.OnLeave;
                     employee.IsActive = true;
+                }
+
+                // =========================================================
+                // Deactivated
+                // =========================================================
+
+                else if (dto.Status == EmployeeStatus.Deactivated)
+                {
+                    var deactivateResult =
+                        await _authService.DeactivateUserAsync(
+                            employee.UserId);
+
+                    if (!deactivateResult.Success)
+                    {
+                        return Result.Failure(
+                            string.IsNullOrWhiteSpace(deactivateResult.Message)
+                                ? "Failed to deactivate the employee user."
+                                : deactivateResult.Message);
+                    }
+
+                    employee.Status = EmployeeStatus.Deactivated;
+                    employee.IsActive = false;
                 }
 
                 // =========================================================

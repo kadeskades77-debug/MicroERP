@@ -17,6 +17,7 @@ public class AuditDefinitionProvider : IPermissionDefinitionProvider
         return
         [
             new(
+                Group.Key,
                 AuditPermissions.Audit.View,
                 "View Audit Logs",
                 "Allows viewing audit logs.")

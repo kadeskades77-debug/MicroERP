@@ -14,8 +14,9 @@ namespace MicroERP.Application.Features.Employees.DTOs
         public string? Email { get; set; }
 
         public string Phone { get; set; } = null!;
-         
+
         public decimal Salary { get; set; }
+
         public int? PositionId { get; set; }
 
         public string? PositionCode { get; set; }
@@ -26,6 +27,6 @@ namespace MicroERP.Application.Features.Employees.DTOs
 
         public string DepartmentName { get; set; } = null!;
 
-        public bool IsActive { get; set; }
+        public EmployeeStatus Status { get; set; }
     }
 }

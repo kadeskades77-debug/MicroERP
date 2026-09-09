@@ -8,7 +8,7 @@ namespace MicroERP.Domin.Entities.Employees
 
         public string NameAr { get; set; } = null!;
 
-        public string NameEn { get; set; }
+        public string NameEn { get; set; } = null!;
 
         public int? ManagerEmployeeId { get; set; }
         public bool HasManager { get; set; }

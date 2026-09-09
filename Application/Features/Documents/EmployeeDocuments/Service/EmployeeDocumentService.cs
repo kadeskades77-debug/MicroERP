@@ -39,9 +39,9 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
 
 
         public async Task<Result<EmployeeDocumentDto>> CreateAsync(
-        int employeeId,
-        CreateEmployeeDocumentDto dto,
-        CancellationToken cancellationToken = default)
+         int employeeId,
+         CreateEmployeeDocumentDto dto,
+         CancellationToken cancellationToken = default)
         {
             // =========================================================
             // Validate Request
@@ -57,6 +57,12 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
             {
                 return Result<EmployeeDocumentDto>.Failure(
                     "Request is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.Name))
+            {
+                return Result<EmployeeDocumentDto>.Failure(
+                    "Document name cannot be empty.");
             }
 
             if (dto.File is null)
@@ -102,10 +108,10 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
             // =========================================================
 
             var validationResult =
-               await _fileValidationService.ValidateAsync(
-                   dto.File,
-                   _fileValidationOptions,
-                   cancellationToken);
+                await _fileValidationService.ValidateAsync(
+                    dto.File,
+                    _fileValidationOptions,
+                    cancellationToken);
 
             if (!validationResult.Success)
             {
@@ -140,7 +146,7 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
             {
                 EmployeeId = employeeId,
 
-                Name = dto.Name?.Trim() ?? string.Empty,
+                Name = dto.Name.Trim(),
 
                 FileName =
                     Path.GetFileName(dto.File.FileName),
@@ -215,6 +221,7 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
         }
 
         public async Task<Result<EmployeeDocumentDto>> UpdateAsync(
+        int employeeId,
         int id,
         UpdateEmployeeDocumentDto dto,
         CancellationToken cancellationToken = default)
@@ -222,6 +229,12 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
             // =========================================================
             // Validate Request
             // =========================================================
+
+            if (employeeId <= 0)
+            {
+                return Result<EmployeeDocumentDto>.Failure(
+                    "Invalid employee ID.");
+            }
 
             if (id <= 0)
             {
@@ -236,13 +249,26 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
             }
 
             // =========================================================
+            // Validate Document Name
+            // =========================================================
+
+            if (dto.Name is not null &&
+                string.IsNullOrWhiteSpace(dto.Name))
+            {
+                return Result<EmployeeDocumentDto>.Failure(
+                    "Document name cannot be empty.");
+            }
+
+            // =========================================================
             // Get Document
             // =========================================================
 
             var document =
                 await _context.EmployeeDocuments
                     .FirstOrDefaultAsync(
-                        x => x.Id == id,
+                        x =>
+                            x.Id == id &&
+                            x.EmployeeId == employeeId,
                         cancellationToken);
 
             if (document is null)
@@ -294,10 +320,10 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
                 // -----------------------------------------------------
 
                 var validationResult =
-             await _fileValidationService.ValidateAsync(
-                 dto.File,
-                 _fileValidationOptions,
-                 cancellationToken);
+                    await _fileValidationService.ValidateAsync(
+                        dto.File,
+                        _fileValidationOptions,
+                        cancellationToken);
 
                 if (!validationResult.Success)
                 {
@@ -349,40 +375,22 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
 
             if (dto.Name is not null)
             {
-                if (string.IsNullOrWhiteSpace(dto.Name))
-                {
-                    // New file may already have been saved.
-                    // Clean it up before returning.
-                    if (newFilePath is not null)
-                    {
-                        await _fileStorage.DeleteFileAsync(
-                            newFilePath,
-                            CancellationToken.None);
-                    }
-
-                    return Result<EmployeeDocumentDto>.Failure(
-                        "Document name cannot be empty.");
-                }
-
                 document.Name = dto.Name.Trim();
             }
 
             if (dto.IssueDate.HasValue)
             {
-                document.IssueDate =
-                    dto.IssueDate.Value;
+                document.IssueDate = dto.IssueDate.Value;
             }
 
             if (dto.ExpiryDate.HasValue)
             {
-                document.ExpiryDate =
-                    dto.ExpiryDate.Value;
+                document.ExpiryDate = dto.ExpiryDate.Value;
             }
 
             if (dto.Notes is not null)
             {
-                document.Notes =
-                    dto.Notes.Trim();
+                document.Notes = dto.Notes.Trim();
             }
 
             // =========================================================
@@ -457,68 +465,100 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
 
 
 
-        public async Task<Result> DeleteAsync(int id,
+        public async Task<Result> DeleteAsync(
+        int employeeId,
+        int id,
         CancellationToken cancellationToken = default)
         {
-            // =========================================================
-            // Validate ID
-            // =========================================================
+            if (employeeId <= 0)
+            {
+                return Result.Failure("Invalid employee ID.");
+            }
 
             if (id <= 0)
             {
-                return Result.Failure(
-                    "Invalid employee document ID.");
+                return Result.Failure("Invalid employee document ID.");
             }
 
-            // =========================================================
-            // Get Document
-            // =========================================================
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync(
+                    cancellationToken);
 
-            var document =
-                await _context.EmployeeDocuments
-                    .FirstOrDefaultAsync(
-                        x => x.Id == id,
-                        cancellationToken);
-
-            if (document is null)
-            {
-                return Result.Failure(
-                    "Employee document not found.");
-            }
-
-            // =========================================================
-            // Soft Delete
-            // =========================================================
-
-            document.IsDeleted = true;
-            document.IsActive = false;
-
-            await _context.SaveChangesAsync(
-                cancellationToken);
-
-            // =========================================================
-            // Delete Physical File
-            // =========================================================
-
-            await _fileStorage.DeleteFileAsync(
-                document.FilePath,
-                cancellationToken);
-
-            return Result.Succeeded(
-                "Employee document deleted successfully.");
-        }
-
-        public async Task<Result> DeleteByEmployeeAsync(int employeeId,
-        CancellationToken cancellationToken = default)
-        {
             try
             {
-                if (employeeId <= 0)
+                var document =
+                    await _context.EmployeeDocuments
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Id == id &&
+                                x.EmployeeId == employeeId,
+                            cancellationToken);
+
+                if (document is null)
                 {
                     return Result.Failure(
-                        "Invalid employee ID.");
+                        "Employee document not found.");
                 }
 
+                document.IsDeleted = true;
+                document.IsActive = false;
+
+                await _context.SaveChangesAsync(
+                    cancellationToken);
+
+                await transaction.CommitAsync(
+                    cancellationToken);
+
+                if (!string.IsNullOrWhiteSpace(document.FilePath))
+                {
+                    await _fileStorage.DeleteFileAsync(
+                        document.FilePath,
+                        CancellationToken.None);
+                }
+
+                await _auditService.LogAsync(
+                    AuditActions.Delete,
+                    nameof(EmployeeDocument),
+                    document.Id.ToString(),
+                    null,
+                    new
+                    {
+                        document.EmployeeId,
+                        document.Name,
+                        document.FileName,
+                        document.FileSize,
+                        document.ContentType
+                    });
+
+                return Result.Succeeded(
+                    "Employee document deleted successfully.");
+            }
+            catch
+            {
+                await transaction.RollbackAsync(
+                    CancellationToken.None);
+
+                return Result.Failure(
+                    "An unexpected error occurred.");
+            }
+        }
+
+        public async Task<Result> DeleteByEmployeeAsync(
+       int employeeId,
+       CancellationToken cancellationToken = default)
+        {
+            if (employeeId <= 0)
+            {
+                return Result.Failure(
+                    "Invalid employee ID.");
+            }
+
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync(
+                    cancellationToken);
+
+            try
+            {
                 var documents =
                     await _context.EmployeeDocuments
                         .Where(x => x.EmployeeId == employeeId)
@@ -526,6 +566,9 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
 
                 if (!documents.Any())
                 {
+                    await transaction.CommitAsync(
+                        cancellationToken);
+
                     return Result.Succeeded(
                         "No employee documents found.");
                 }
@@ -539,18 +582,41 @@ namespace MicroERP.Application.Features.Documents.EmployeeDocuments.Service
                 await _context.SaveChangesAsync(
                     cancellationToken);
 
+                await transaction.CommitAsync(
+                    cancellationToken);
+
                 foreach (var document in documents)
                 {
-                    await _fileStorage.DeleteFileAsync(
-                        document.FilePath,
-                        cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(document.FilePath))
+                    {
+                        await _fileStorage.DeleteFileAsync(
+                            document.FilePath,
+                            CancellationToken.None);
+                    }
                 }
+
+                await _auditService.LogAsync(
+                    AuditActions.Delete,
+                    nameof(EmployeeDocument),
+                    employeeId.ToString(),
+                    null,
+                    new
+                    {
+                        EmployeeId = employeeId,
+                        DeletedDocumentsCount = documents.Count,
+                        DocumentIds = documents
+                            .Select(x => x.Id)
+                            .ToList()
+                    });
 
                 return Result.Succeeded(
                     "Employee documents deleted successfully.");
             }
-            catch (Exception)
+            catch
             {
+                await transaction.RollbackAsync(
+                    CancellationToken.None);
+
                 return Result.Failure(
                     "An unexpected error occurred.");
             }
