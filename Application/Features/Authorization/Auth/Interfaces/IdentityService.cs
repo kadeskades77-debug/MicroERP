@@ -1,12 +1,13 @@
 ﻿using MicroERP.Application.Common.Models;
-using MicroERP.Application.Features.Authentication.Auth.DTOs;
+using MicroERP.Application.Features.Authorization.Auth.DTOs;
 
-namespace MicroERP.Application.Features.Authentication.Auth.Interfaces
+namespace MicroERP.Application.Features.Authorization.Auth.Interfaces
 {
     public interface IdentityService
     {
         Task<Result> RegisterAsync(RegisterDto dto);
         Task<Result<AuthResponseDto>> LoginAsync(LoginDto dto);
+        Task<Result<CurrentUserDto>> GetCurrentUserAsync(string userId);
         Task<Result<CreateEmployeeUserResultDto>>CreateEmployeeUserAsync(CreateEmployeeUserDto dto);
         Task<Result> DeleteUserAsync(string userId);
         Task<Result> ActivateUserAsync(string userId);

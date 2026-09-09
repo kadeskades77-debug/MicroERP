@@ -2,13 +2,12 @@
 using MicroERP.Application.Common.Interfaces;
 using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.Audit.Interfaces;
-using MicroERP.Application.Features.Authentication.Auth.DTOs;
-using MicroERP.Application.Features.Authentication.Auth.Interfaces;
+using MicroERP.Application.Features.Authorization.Auth.DTOs;
+using MicroERP.Application.Features.Authorization.Auth.Interfaces;
 using MicroERP.Domain.Audit;
 using MicroERP.Domain.Identity;
 using MicroERP.Domin.Identity;
 using MicroERP.Infrastructure.Identity;
-using MicroERP.Infrastructure.Security;
 using Microsoft.AspNetCore.Identity;
 
 namespace MicroERP.Infrastructure.Services;
@@ -133,6 +132,34 @@ public class dentityService : IdentityService
             response,
             "Login successful.");
     }
+    public async Task<Result<CurrentUserDto>> GetCurrentUserAsync(string userId)
+{
+    var user = await _userManager.FindByIdAsync(userId);
+
+    if (user is null)
+        return Result<CurrentUserDto>.Failure(
+            "User not found.");
+
+    if (!user.IsActive)
+        return Result<CurrentUserDto>.Failure(
+            "This account is inactive.");
+
+    var roles = await _userManager.GetRolesAsync(user);
+
+    var permissions =
+        await _authorizationManager
+            .GetPermissionsByUserAsync(userId);
+
+    var response = new CurrentUserDto
+    {
+        Email = user.Email ?? string.Empty,
+        FullName = user.FullName,
+        Roles = roles.ToList(),
+        Permissions = permissions.ToList()
+    };
+
+    return Result<CurrentUserDto>.Succeeded(response);
+}
     public async Task<Result> DeleteUserAsync(string userId)
     {
         var user = await _userManager.FindByIdAsync(userId);

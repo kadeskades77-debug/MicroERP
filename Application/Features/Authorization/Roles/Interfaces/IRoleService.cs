@@ -1,8 +1,8 @@
 ﻿using MicroERP.Application.Common.DTOs;
 using MicroERP.Application.Common.Models;
-using MicroERP.Application.Features.Authentication.Roles.DTOs;
+using MicroERP.Application.Features.Authorization.Roles.DTOs;
 
-namespace MicroERP.Application.Features.Authentication.Roles.Interfaces;
+namespace MicroERP.Application.Features.Authorization.Roles.Interfaces;
 
 public interface IRoleService
 {

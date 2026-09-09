@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using MicroERP.Application.Features.Authentication.Auth.DTOs;
+using MicroERP.Application.Features.Authorization.Auth.DTOs;
 
 namespace MicroERP.Application.Features.Authentication.Auth.Validators;
 

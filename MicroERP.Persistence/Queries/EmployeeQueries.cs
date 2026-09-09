@@ -28,6 +28,20 @@ public class EmployeeQueries : IEmployeeQueries
             .ToList();
     }
 
+    public async Task<List<EmployeeListDto>> GetDeletedAsync()
+    {
+        var employees = await _context.Employees
+            .IgnoreQueryFilters()
+            .Include(x => x.User)
+            .Include(x => x.Department)
+            .Where(x => x.IsDeleted)
+            .ToListAsync();
+
+        return employees
+            .Select(x => x.ToListDto())
+            .ToList();
+    }
+
     public async Task<Employee?> GetByIdAsync(int id)
     {
         return await _context.Employees

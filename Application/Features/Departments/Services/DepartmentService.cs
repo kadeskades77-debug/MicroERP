@@ -1,5 +1,4 @@
 ﻿using MicroERP.Application.Common.DTOs;
-using MicroERP.Application.Common.Exceptions;
 using MicroERP.Application.Common.Interfaces;
 using MicroERP.Application.Common.Mappings;
 using MicroERP.Application.Common.Models;

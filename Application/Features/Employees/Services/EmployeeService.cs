@@ -4,8 +4,8 @@ using MicroERP.Application.Common.Interfaces;
 using MicroERP.Application.Common.Mappings;
 using MicroERP.Application.Common.Models;
 using MicroERP.Application.Features.Audit.Interfaces;
-using MicroERP.Application.Features.Authentication.Auth.DTOs;
-using MicroERP.Application.Features.Authentication.Auth.Interfaces;
+using MicroERP.Application.Features.Authorization.Auth.DTOs;
+using MicroERP.Application.Features.Authorization.Auth.Interfaces;
 using MicroERP.Application.Features.Departments.Interfaces;
 using MicroERP.Application.Features.Documents.EmployeeDocuments.Interfaces;
 using MicroERP.Application.Features.Employees.DTOs;
@@ -220,8 +220,8 @@ namespace MicroERP.Application.Features.Employees.Services
             return Result<List<EmployeeListDto>>.Succeeded(data);
         }
 
-    public async Task<Result<EmployeeDto>> GetByIdAsync(int id,
-    CancellationToken cancellationToken = default)
+        public async Task<Result<EmployeeDto>> GetByIdAsync(int id,
+        CancellationToken cancellationToken = default)
         {
             try
             {
@@ -245,8 +245,13 @@ namespace MicroERP.Application.Features.Employees.Services
             }
         }
 
+        public async Task<Result<List<EmployeeListDto>>> GetDeletedAsync()
+        {
+            var data = await _employeeQueries.GetDeletedAsync();
 
-    
+            return Result<List<EmployeeListDto>>.Succeeded(data);
+        }
+
         public async Task<Result> TransferEmployeeAsync(int employeeId,
         TransferEmployeeDto dto,
         CancellationToken cancellationToken = default)
@@ -381,7 +386,8 @@ namespace MicroERP.Application.Features.Employees.Services
         }
 
 
-        public async Task<Result> UpdateAsync(int id,UpdateEmployeeDto dto,
+        public async Task<Result> UpdateAsync(int id,
+        UpdateEmployeeDto dto,
         CancellationToken cancellationToken = default)
         {
             try
@@ -396,40 +402,59 @@ namespace MicroERP.Application.Features.Employees.Services
 
                 var oldValues = new
                 {
-                    employee.User.FullName,
-                    employee.User.Email,
+                    FullName = employee.User.FullName,
+                    Email = employee.User.Email,
                     employee.Phone
                 };
 
-                if (!string.IsNullOrWhiteSpace(dto.Phone))
-                {
-                    dto.Phone =
-                        dto.Phone.Trim();
+              var fullName =
+    string.IsNullOrWhiteSpace(dto.FullName)
+        ? employee.User.FullName
+        : dto.FullName.Trim();
 
+     var email =
+    string.IsNullOrWhiteSpace(dto.Email)
+        ? employee.User.Email
+        : dto.Email.Trim().ToLower();
+
+    var phone =
+    string.IsNullOrWhiteSpace(dto.Phone)
+        ? employee.Phone
+        : dto.Phone.Trim();
+
+                if (!string.Equals(
+                        phone,
+                        employee.Phone,
+                        StringComparison.Ordinal))
+                {
                     var phoneExists =
                         await _employeeQueries
                             .PhoneExistsAsync(
-                                dto.Phone,
+                                phone,
                                 id);
 
                     if (phoneExists)
                         return Result.Failure(
                             "Phone already exists.");
-
-                    employee.Phone =
-                        dto.Phone;
                 }
 
-                if (!string.IsNullOrWhiteSpace(dto.Email))
+                if (!string.Equals(
+              email,
+              employee.User.Email,
+              StringComparison.OrdinalIgnoreCase))
                 {
+                    if (string.IsNullOrWhiteSpace(email))
+                    {
+                        return Result.Failure(
+                            "Employee email cannot be empty.");
+                    }
+
                     var result =
                         await _authService.ChangeEmailAsync(
                             new ChangeEmailDto
                             {
                                 UserId = employee.UserId,
-                                Email = dto.Email
-                                    .Trim()
-                                    .ToLower()
+                                Email = email
                             });
 
                     if (!result.Success)
@@ -439,13 +464,16 @@ namespace MicroERP.Application.Features.Employees.Services
                                 : result.Message);
                 }
 
-                if (!string.IsNullOrWhiteSpace(dto.FullName))
+                if (!string.Equals(
+                        fullName,
+                        employee.User.FullName,
+                        StringComparison.Ordinal))
                 {
                     var authResult =
                         await _authService
                             .UpdateEmployeeUserAsync(
                                 employee.UserId,
-                                dto.FullName.Trim());
+                                fullName);
 
                     if (!authResult.Success)
                         return Result.Failure(
@@ -454,6 +482,8 @@ namespace MicroERP.Application.Features.Employees.Services
                                     ? "Failed to update employee name."
                                     : authResult.Message);
                 }
+
+                employee.Phone = phone;
 
                 await _context.SaveChangesAsync(
                     cancellationToken);
@@ -465,11 +495,9 @@ namespace MicroERP.Application.Features.Employees.Services
                     oldValues,
                     new
                     {
-                        FullName =
-                            employee.User.FullName,
-                        Email =
-                            employee.User.Email,
-                        employee.Phone
+                        FullName = fullName,
+                        Email = email,
+                        Phone = phone
                     });
 
                 return Result.Succeeded(

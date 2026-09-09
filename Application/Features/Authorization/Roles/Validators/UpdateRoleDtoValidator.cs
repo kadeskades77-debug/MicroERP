@@ -1,10 +1,10 @@
 ﻿using FluentValidation;
 using MicroERP.Application.Common.Interfaces;
-using MicroERP.Application.Features.Authentication.Roles.DTOs;
+using MicroERP.Application.Features.Authorization.Roles.DTOs;
 using MicroERP.Domain.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace MicroERP.Application.Features.Authentication.Roles.Validators
+namespace MicroERP.Application.Features.Authorization.Roles.Validators
 {
     public class UpdateRoleDtoValidator : AbstractValidator<UpdateRoleDto>
     {

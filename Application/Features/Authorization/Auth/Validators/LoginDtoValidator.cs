@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
-using MicroERP.Application.Features.Authentication.Auth.DTOs;
+using MicroERP.Application.Features.Authorization.Auth.DTOs;
 
-namespace MicroERP.Application.Features.Authentication.Auth.Validators;
+namespace MicroERP.Application.Features.Authorization.Auth.Validators;
 
 public class LoginDtoValidator : AbstractValidator<LoginDto>
 {

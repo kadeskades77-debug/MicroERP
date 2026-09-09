@@ -2,8 +2,8 @@
 using MicroERP.Application.Common.Files.Interfaces;
 using MicroERP.Application.Common.Interfaces;
 using MicroERP.Application.Features.Audit.Interfaces;
-using MicroERP.Application.Features.Authentication.Auth.Interfaces;
-using MicroERP.Application.Features.Authentication.Roles.Interfaces;
+using MicroERP.Application.Features.Authorization.Auth.Interfaces;
+using MicroERP.Application.Features.Authorization.Roles.Interfaces;
 using MicroERP.Application.Features.Authorization.Permissions.Interfaces;
 using MicroERP.Application.Features.Authorization.UserPermissions.Interfaces;
 using MicroERP.Infrastructure.Authorization;

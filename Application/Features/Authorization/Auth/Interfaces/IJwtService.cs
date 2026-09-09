@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MicroERP.Application.Features.Authentication.Auth.Interfaces
+namespace MicroERP.Application.Features.Authorization.Auth.Interfaces
 {
     public interface IJwtService
     {

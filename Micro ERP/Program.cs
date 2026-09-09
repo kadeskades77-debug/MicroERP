@@ -120,7 +120,20 @@ builder.Services
 
 #endregion
 
+#region CORS
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+#endregion
 
 
 #region Authorization
@@ -367,7 +380,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-
+app.UseCors("Frontend");
 app.UseAuthentication();
 
 app.UseAuthorization();

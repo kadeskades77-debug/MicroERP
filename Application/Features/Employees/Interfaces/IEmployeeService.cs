@@ -11,6 +11,7 @@ namespace MicroERP.Application.Features.Employees.Interfaces
         Task<Result<CreateEmployeeResultDto>> CreateAsync(CreateEmployeeDto dto,CancellationToken cancellationToken = default);
         Task<Result<EmployeeDto>> GetByIdAsync(int id,CancellationToken cancellationToken = default);
         Task<Result<List<EmployeeListDto>>> GetAllAsync();
+        Task<Result<List<EmployeeListDto>>> GetDeletedAsync();
         Task<Result> TransferEmployeeAsync(int employeeId,TransferEmployeeDto dto,CancellationToken cancellationToken = default);
         Task<Result> UpdateSalaryAsync(int employeeId,UpdateEmployeeSalaryDto dto,CancellationToken cancellationToken = default);
         Task<Result> UpdateAsync(int id,UpdateEmployeeDto dto,CancellationToken cancellationToken = default);

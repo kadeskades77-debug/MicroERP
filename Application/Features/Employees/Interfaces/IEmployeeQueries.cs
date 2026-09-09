@@ -22,6 +22,8 @@ namespace MicroERP.Application.Features.Employees.Interfaces
         Task<bool> PhoneExistsAsync(string phone, int excludeEmployeeId);
         Task<List<EmployeeListDto>> GetAllAsync();
 
+        Task<List<EmployeeListDto>> GetDeletedAsync();
+
         Task<Employee?> GetDeletedByIdAsync(int id);
     }
 }

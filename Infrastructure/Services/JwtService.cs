@@ -1,4 +1,4 @@
-﻿using MicroERP.Application.Features.Authentication.Auth.Interfaces;
+﻿using MicroERP.Application.Features.Authorization.Auth.Interfaces;
 using MicroERP.Domin.Identity;
 using MicroERP.Infrastructure.Settings;
 using Microsoft.Extensions.Options;

@@ -1,4 +1,4 @@
-﻿namespace MicroERP.Application.Features.Authentication.Roles.DTOs;
+﻿namespace MicroERP.Application.Features.Authorization.Roles.DTOs;
 
 public class CreateRoleDto
 {

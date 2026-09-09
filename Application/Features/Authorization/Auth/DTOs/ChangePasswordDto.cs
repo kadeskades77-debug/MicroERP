@@ -1,4 +1,4 @@
-﻿namespace MicroERP.Application.Features.Authentication.Auth.DTOs
+﻿namespace MicroERP.Application.Features.Authorization.Auth.DTOs
 {
     public class ChangePasswordDto
     {

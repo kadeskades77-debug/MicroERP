@@ -1,6 +1,6 @@
 ﻿using MicroERP.Application.Authorization.Permissions;
-using MicroERP.Application.Features.Authentication.Roles.DTOs;
-using MicroERP.Application.Features.Authentication.Roles.Interfaces;
+using MicroERP.Application.Features.Authorization.Roles.DTOs;
+using MicroERP.Application.Features.Authorization.Roles.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -1,6 +1,6 @@
 ﻿using MicroERP.Application.Authorization.Permissions;
-using MicroERP.Application.Features.Authentication.Auth.DTOs;
-using MicroERP.Application.Features.Authentication.Auth.Interfaces;
+using MicroERP.Application.Features.Authorization.Auth.DTOs;
+using MicroERP.Application.Features.Authorization.Auth.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -42,6 +42,21 @@ public class AuthController : BaseApiController
         return Ok(result);
     }
 
+  [HttpGet("me")]
+  [Authorize]
+  public async Task<IActionResult> GetCurrentUser()
+  {
+    var userId = User
+        .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
+        ?.Value;
+
+    if (string.IsNullOrEmpty(userId))
+        return Unauthorized();
+
+    var result = await _authService.GetCurrentUserAsync(userId);
+
+    return HandleResult(result);
+  }
 
     [HttpPut("change-password")]
     [AllowAnonymous]

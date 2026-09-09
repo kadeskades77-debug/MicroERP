@@ -37,6 +37,20 @@ public class EmployeeController : BaseApiController
 
 
     // =========================================================
+    // Get Deleted
+    // =========================================================
+
+    [HttpGet("deleted")]
+    [Authorize(Policy = HRPermissions.Employee.View)]
+    public async Task<IActionResult> GetDeleted()
+    {
+        var result =
+            await _employeeService.GetDeletedAsync();
+
+        return HandleResult(result);
+    }
+
+    // =========================================================
     // Get By Id
     // =========================================================
 
