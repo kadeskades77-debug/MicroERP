@@ -59,6 +59,25 @@ public class PayrollReportsController : ControllerBase
         return Ok(result);
     }
 
+    // =========================================================
+    // Get Payroll Trend
+    // =========================================================
+
+    [HttpGet("trend")]
+    public async Task<IActionResult> GetTrend(
+        [FromQuery] PayrollTrendFilterDto filter,
+        CancellationToken cancellationToken)
+    {
+        var result =
+            await _queries.GetPayrollTrendAsync(
+                filter,
+                cancellationToken);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
 
     [HttpGet("details")]
     public async Task<IActionResult> GetDetails(

@@ -314,26 +314,23 @@ namespace MicroERP.Persistence.Queries
                             p.TotalLostTimeMinutes),
 
 
-                    ExcellentCount =
-                        x.Count(p =>
-                            p.AttendanceScore >= 90),
+                  ExcellentCount =
+    x.Count(p =>
+        p.AttendanceScore >= 90),
 
+GoodCount =
+    x.Count(p =>
+        p.AttendanceScore >= 80 &&
+        p.AttendanceScore < 90),
 
-                    GoodCount =
-                        x.Count(p =>
-                            p.AttendanceScore >= 75 &&
-                            p.AttendanceScore < 90),
+AverageCount =
+    x.Count(p =>
+        p.AttendanceScore >= 70 &&
+        p.AttendanceScore < 80),
 
-
-                    AverageCount =
-                        x.Count(p =>
-                            p.AttendanceScore >= 60 &&
-                            p.AttendanceScore < 75),
-
-
-                    WeakCount =
-                        x.Count(p =>
-                            p.AttendanceScore < 60)
+WeakCount =
+    x.Count(p =>
+        p.AttendanceScore < 70),
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -534,6 +531,7 @@ namespace MicroERP.Persistence.Queries
         int year,
         int month,
         CancellationToken cancellationToken = default)
+
         {
             var result =
                 await BuildMonthlyQuery(year, month)

@@ -26,133 +26,136 @@ public class PayrollReportQueries
 
 
 
+
     public async Task<Result<PayrollSummaryReportDto>> GetPayrollSummaryAsync(
-      PayrollSummaryFilterDto filter,
-      CancellationToken cancellationToken = default)
+    PayrollSummaryFilterDto filter,
+    CancellationToken cancellationToken = default)
+{
+    var period = await _context.PayrollPeriods
+        .AsNoTracking()
+        .Where(x => x.Id == filter.PayrollPeriodId)
+        .Select(x => new
+        {
+            x.Id,
+            x.Year,
+            x.Month
+        })
+        .FirstOrDefaultAsync(cancellationToken);
+
+    if (period == null)
     {
-        var query =
-            _context.Payrolls
-                .AsNoTracking()
-                .Where(x =>
-                    x.PayrollPeriodId == filter.PayrollPeriodId);
-
-        if (filter.DepartmentId.HasValue)
-        {
-            query =
-                query.Where(x =>
-                    x.Employee.DepartmentId ==
-                    filter.DepartmentId.Value);
-        }
-
-        if (filter.Status.HasValue)
-        {
-            query =
-                query.Where(x =>
-                    x.Status ==
-                    filter.Status.Value);
-        }
-
-        var payrolls =
-            await query
-                .Select(x => new PayrollSummaryDto
-                {
-                    PayrollId =
-                        x.Id,
-
-                    EmployeeId =
-                        x.EmployeeId,
-
-                    EmployeeName =
-                        x.Employee.User.FullName,
-
-                    Department =
-                        x.Employee.Department.NameEn,
-
-                    GrossSalary =
-                        x.GrossSalary,
-
-                    TotalAllowances =
-                        x.TotalAllowances,
-
-                    TotalOvertime =
-                        x.TotalOvertime,
-
-                    TotalDeductions =
-                        x.TotalDeductions,
-
-                    NetSalary =
-                        x.NetSalary,
-
-                    Status =
-                        x.Status
-                })
-                .OrderBy(x => x.Department)
-                .ThenBy(x => x.EmployeeName)
-                .ToListAsync(cancellationToken);
-
-        if (payrolls.Count == 0)
-        {
-            return Result<PayrollSummaryReportDto>.Failure(
-                "No payroll records found.");
-        }
-
-        var period =
-            await _context.PayrollPeriods
-                .AsNoTracking()
-                .Where(x =>
-                    x.Id == filter.PayrollPeriodId)
-                .Select(x => new
-                {
-                    x.Id,
-                    x.Year,
-                    x.Month,
-                    x.StartDate,
-                    x.EndDate
-                })
-                .FirstOrDefaultAsync(cancellationToken);
-
-        if (period == null)
-        {
-            return Result<PayrollSummaryReportDto>.Failure(
-                "Payroll period was not found.");
-        }
-
-   
-
-        var result =
-      new PayrollSummaryReportDto
-      {
-          Year = period.Year,
-
-          Month = period.Month,
-
-          Payrolls = payrolls,
-
-          EmployeesCount =
-              payrolls
-                  .Select(x => x.EmployeeId)
-                  .Distinct()
-                  .Count(),
-
-          TotalGrossSalary =
-              payrolls.Sum(x => x.GrossSalary),
-
-          TotalAllowances =
-              payrolls.Sum(x => x.TotalAllowances),
-
-          TotalOvertime =
-              payrolls.Sum(x => x.TotalOvertime),
-
-          TotalDeductions =
-              payrolls.Sum(x => x.TotalDeductions),
-
-          TotalNetSalary =
-              payrolls.Sum(x => x.NetSalary)
-      };
-
-        return Result<PayrollSummaryReportDto>.Succeeded(
-            result);
+        return Result<PayrollSummaryReportDto>.Failure(
+            "Payroll period was not found.");
     }
+
+    var query = _context.Payrolls
+        .AsNoTracking()
+        .Where(x => x.PayrollPeriodId == filter.PayrollPeriodId);
+
+    if (filter.DepartmentId.HasValue)
+    {
+        query = query.Where(x =>
+            x.Employee.DepartmentId == filter.DepartmentId.Value);
+    }
+
+    if (filter.Status.HasValue)
+    {
+        query = query.Where(x =>
+            x.Status == filter.Status.Value);
+    }
+
+    var payrolls = await query
+        .Select(x => new PayrollSummaryDto
+        {
+            PayrollId = x.Id,
+            EmployeeId = x.EmployeeId,
+            EmployeeName = x.Employee.User.FullName,
+            Department = x.Employee.Department.NameEn,
+            GrossSalary = x.GrossSalary,
+            TotalAllowances = x.TotalAllowances,
+            TotalOvertime = x.TotalOvertime,
+            TotalDeductions = x.TotalDeductions,
+            NetSalary = x.NetSalary,
+            Status = x.Status
+        })
+        .OrderBy(x => x.Department)
+        .ThenBy(x => x.EmployeeName)
+        .ToListAsync(cancellationToken);
+
+    if (payrolls.Count == 0)
+    {
+        return Result<PayrollSummaryReportDto>.Failure(
+            "No payroll records found.");
+    }
+
+    var result = new PayrollSummaryReportDto
+    {
+        Year = period.Year,
+        Month = period.Month,
+        Payrolls = payrolls,
+        EmployeesCount = payrolls
+            .Select(x => x.EmployeeId)
+            .Distinct()
+            .Count(),
+        TotalGrossSalary = payrolls.Sum(x => x.GrossSalary),
+        TotalAllowances = payrolls.Sum(x => x.TotalAllowances),
+        TotalOvertime = payrolls.Sum(x => x.TotalOvertime),
+        TotalDeductions = payrolls.Sum(x => x.TotalDeductions),
+        TotalNetSalary = payrolls.Sum(x => x.NetSalary)
+    };
+
+    return Result<PayrollSummaryReportDto>.Succeeded(result);
+}
+
+
+    public async Task<Result<List<PayrollTrendDto>>> GetPayrollTrendAsync(
+    PayrollTrendFilterDto filter,
+    CancellationToken cancellationToken = default)
+{
+    var query = _context.Payrolls
+        .AsNoTracking()
+        .Where(x => x.PayrollPeriod.Year == filter.Year);
+
+    if (filter.DepartmentId.HasValue)
+    {
+        query = query.Where(x =>
+            x.Employee.DepartmentId == filter.DepartmentId.Value);
+    }
+
+    var result = await query
+        .GroupBy(x => new
+        {
+            x.PayrollPeriodId,
+            x.PayrollPeriod.Year,
+            x.PayrollPeriod.Month
+        })
+        .OrderBy(g => g.Key.Year)
+        .ThenBy(g => g.Key.Month)
+        .Select(g => new PayrollTrendDto
+        {
+            PayrollPeriodId = g.Key.PayrollPeriodId,
+
+            Period = $"{g.Key.Month:00}/{g.Key.Year}",
+
+            TotalGrossSalary = g.Sum(x => x.GrossSalary),
+
+            TotalNetSalary = g.Sum(x => x.NetSalary),
+
+            TotalDeductions = g.Sum(x => x.TotalDeductions),
+
+            TotalOvertime = g.Sum(x => x.TotalOvertime)
+        })
+        .ToListAsync(cancellationToken);
+
+    if (result.Count == 0)
+    {
+        return Result<List<PayrollTrendDto>>.Failure(
+            "No payroll records found.");
+    }
+
+    return Result<List<PayrollTrendDto>>.Succeeded(result);
+}
+
 
 
     public async Task<Result<PayrollDetailsDto>>

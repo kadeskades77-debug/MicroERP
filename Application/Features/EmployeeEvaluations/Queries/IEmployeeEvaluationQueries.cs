@@ -21,6 +21,16 @@ public interface IEmployeeEvaluationQueries
         CancellationToken ct = default);
 
 
+    // =========================================================
+    // Statistics Evaluations
+    // =========================================================
+
+
+    Task<Result<EmployeeEvaluationStatisticsDto>>
+     GetStatisticsAsync(
+         int year,
+         int month,
+         CancellationToken ct = default);
 
     // =========================================================
     // Employee + Year + Month

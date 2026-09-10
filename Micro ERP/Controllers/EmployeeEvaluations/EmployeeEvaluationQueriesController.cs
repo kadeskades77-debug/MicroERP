@@ -46,6 +46,27 @@ public class EmployeeEvaluationQueriesController : ControllerBase
 
 
     // =========================================================
+    // Get Statistics
+    // =========================================================
+
+    [HttpGet("statistics")]
+    [Authorize(
+        Policy = HRPermissions.EmployeeEvaluation.View)]
+    public async Task<ActionResult<Result<EmployeeEvaluationStatisticsDto>>> GetStatistics(
+        int year,
+        int month,
+        CancellationToken ct)
+    {
+        var result =
+            await _queries.GetStatisticsAsync(
+                year,
+                month,
+                ct);
+
+        return Ok(result);
+    }
+
+    // =========================================================
     // Paged
     // =========================================================
 

@@ -611,6 +611,111 @@ public class EmployeeEvaluationQueries : IEmployeeEvaluationQueries
 
 
     // =========================================================
+    // Statistics Evaluations
+    // =========================================================
+
+    public async Task<Result<EmployeeEvaluationStatisticsDto>>
+    GetStatisticsAsync(
+        int year,
+        int month,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var evaluations = _context.EmployeeEvaluations
+                .AsNoTracking()
+                .Where(x =>
+                    x.Period.StartDate.Year == year &&
+                    x.Period.StartDate.Month == month);
+
+            var totalEmployees = await _context.Employees
+                .AsNoTracking()
+                .CountAsync(x => x.IsActive, ct);
+
+            var completedStatuses = new[]
+            {
+            EmployeeEvaluationStatus.Submitted,
+            EmployeeEvaluationStatus.Approved
+        };
+
+            var statistics = await evaluations
+                .GroupBy(_ => 1)
+                .Select(x => new EmployeeEvaluationStatisticsDto
+                {
+                    DraftEvaluations = x.Count(e =>
+                        e.Status == EmployeeEvaluationStatus.Draft),
+
+                    InProgressEvaluations = x.Count(e =>
+                        e.Status == EmployeeEvaluationStatus.InProgress),
+
+                    SubmittedEvaluations = x.Count(e =>
+                        e.Status == EmployeeEvaluationStatus.Submitted),
+
+                    ApprovedEvaluations = x.Count(e =>
+                        e.Status == EmployeeEvaluationStatus.Approved),
+
+                    RejectedEvaluations = x.Count(e =>
+                        e.Status == EmployeeEvaluationStatus.Rejected),
+
+                    EvaluatedEmployees = x.Count(e =>
+                        completedStatuses.Contains(e.Status)),
+
+                    AverageScore = x
+                        .Where(e => completedStatuses.Contains(e.Status))
+                        .Select(e => (decimal?)e.TotalScore)
+                        .Average() ?? 0,
+
+                    HighestScore = x
+                        .Where(e => completedStatuses.Contains(e.Status))
+                        .Select(e => (decimal?)e.TotalScore)
+                        .Max() ?? 0,
+
+                    LowestScore = x
+                        .Where(e => completedStatuses.Contains(e.Status))
+                        .Select(e => (decimal?)e.TotalScore)
+                        .Min() ?? 0,
+
+                    ExcellentEmployees = x.Count(e =>
+                        completedStatuses.Contains(e.Status) &&
+                        e.FinalRate == FinalRate.Excellent),
+
+                    VeryGoodEmployees = x.Count(e =>
+                        completedStatuses.Contains(e.Status) &&
+                        e.FinalRate == FinalRate.VeryGood),
+
+                    GoodEmployees = x.Count(e =>
+                        completedStatuses.Contains(e.Status) &&
+                        e.FinalRate == FinalRate.Good),
+
+                    AcceptableEmployees = x.Count(e =>
+                        completedStatuses.Contains(e.Status) &&
+                        e.FinalRate == FinalRate.Acceptable),
+
+                    PoorEmployees = x.Count(e =>
+                        completedStatuses.Contains(e.Status) &&
+                        e.FinalRate == FinalRate.Poor)
+                })
+                .FirstOrDefaultAsync(ct);
+
+            if (statistics == null)
+            {
+                statistics = new EmployeeEvaluationStatisticsDto();
+            }
+
+            statistics.TotalEmployees = totalEmployees;
+
+            return Result<EmployeeEvaluationStatisticsDto>
+                .Succeeded(statistics);
+        }
+        catch
+        {
+            return Result<EmployeeEvaluationStatisticsDto>
+                .Failure("An unexpected error occurred.");
+        }
+    }
+
+
+    // =========================================================
     // 5. Get All Employees For Excel
     // =========================================================
 
@@ -1634,31 +1739,6 @@ public class EmployeeEvaluationQueries : IEmployeeEvaluationQueries
         };
     }
 
-
-    private static string BuildRowPeriodLabel(
-        int year,
-        int month,
-        EvaluationReportPeriod period)
-    {
-        return period switch
-        {
-            EvaluationReportPeriod.Monthly =>
-                $"{GetMonthName(month)} {year}",
-
-            EvaluationReportPeriod.Quarterly =>
-                $"Q{GetQuarter(month)} {year}",
-
-            EvaluationReportPeriod.HalfYearly =>
-                month <= 6
-                    ? $"H1 {year}"
-                    : $"H2 {year}",
-
-            EvaluationReportPeriod.Yearly =>
-                year.ToString(),
-
-            _ => year.ToString()
-        };
-    }
 
 
     private static string BuildGroupedPeriodLabel(

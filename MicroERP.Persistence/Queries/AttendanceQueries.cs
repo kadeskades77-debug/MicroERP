@@ -498,6 +498,7 @@ public class AttendanceQueries : IAttendanceQueries
             .Succeeded(result);
     }
 
+
     public async Task<Result<List<DepartmentAttendanceDashboardDto>>>
      GetDepartmentDashboardAsync(
      DateOnly? date = null,

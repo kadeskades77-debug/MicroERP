@@ -177,6 +177,7 @@ public class AttendanceQueriesController : ControllerBase
         return Ok(result);
     }
 
+
     [HttpGet("department-dashboard")]
     [Authorize(Policy = HRPermissions.Attendance.View)]
     public async Task<IActionResult> GetDepartmentDashboard(

@@ -10,6 +10,11 @@ public interface IPayrollReportQueries
             PayrollSummaryFilterDto filter,
             CancellationToken cancellationToken = default);
 
+    Task<Result<List<PayrollTrendDto>>>
+    GetPayrollTrendAsync(
+        PayrollTrendFilterDto filter,
+        CancellationToken cancellationToken = default);
+
 
     Task<Result<PayrollDetailsDto>>
         GetPayrollDetailsAsync(
